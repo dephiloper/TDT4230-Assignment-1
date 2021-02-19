@@ -1,7 +1,7 @@
-#version 430 core
+#version 410 core
 
-in layout(location = 0) vec3 normal;
-in layout(location = 1) vec2 textureCoordinates;
+layout(location = 0) in vec3 normal;
+layout(location = 1) in vec2 textureCoordinates;
 
 out vec4 color;
 

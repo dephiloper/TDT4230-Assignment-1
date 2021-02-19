@@ -17,6 +17,10 @@ static void glfwErrorCallback(int error, const char *description)
     fprintf(stderr, "GLFW returned an error:\n\t%s (%i)\n", description, error);
 }
 
+static void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
+    glViewport(0, 0, width, height);
+}
+
 
 GLFWwindow* initialise()
 {
@@ -29,7 +33,8 @@ GLFWwindow* initialise()
 
     // Set core window options (adjust version numbers if needed)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Enable the GLFW runtime error callback function defined previously.
@@ -56,6 +61,7 @@ GLFWwindow* initialise()
 
     // Let the window be the current OpenGL context and initialise glad
     glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
     gladLoadGL();
 
     // Print various OpenGL information to stdout
@@ -66,7 +72,6 @@ GLFWwindow* initialise()
 
     return window;
 }
-
 
 int main(int argc, const char* argb[])
 {

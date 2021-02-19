@@ -72,9 +72,9 @@ double mouseSensitivity = 1.0;
 double lastMouseX = windowWidth / 2;
 double lastMouseY = windowHeight / 2;
 void mouseCallback(GLFWwindow* window, double x, double y) {
-    int windowWidth, windowHeight;
-    glfwGetWindowSize(window, &windowWidth, &windowHeight);
-    glViewport(0, 0, windowWidth, windowHeight);
+    // int windowWidth, windowHeight;
+    // glfwGetWindowSize(window, &windowWidth, &windowHeight);
+    // glViewport(0, 0, windowWidth, windowHeight);
 
     double deltaX = x - lastMouseX;
     double deltaY = y - lastMouseY;
@@ -364,7 +364,9 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
 }
 
 void renderNode(SceneNode* node) {
-    glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
+    unsigned int MVP = shader->getUniformFromName("MVP");
+    glUniformMatrix4fv(MVP, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
+    //glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
 
     switch(node->nodeType) {
         case GEOMETRY:
@@ -383,9 +385,9 @@ void renderNode(SceneNode* node) {
 }
 
 void renderFrame(GLFWwindow* window) {
-    int windowWidth, windowHeight;
-    glfwGetWindowSize(window, &windowWidth, &windowHeight);
-    glViewport(0, 0, windowWidth, windowHeight);
+    // int windowWidth, windowHeight;
+    // glfwGetWindowSize(window, &windowWidth, &windowHeight);
+    // glViewport(0, 0, windowWidth, windowHeight);
 
     renderNode(rootNode);
 }
