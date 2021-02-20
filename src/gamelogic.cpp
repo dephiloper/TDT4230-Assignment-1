@@ -133,16 +133,27 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     padNode  = createSceneNode();
     ballNode = createSceneNode();
 
-    // task 1a - point light scene nodes with ids for referencing
+    //task 1a - point light scene nodes with ids for referencing
     pointLightA = createSceneNode(POINT_LIGHT);
     pointLightA->position = glm::vec3(0.0, 10.0, 0.0);
     pointLightA->id = 0;
     pointLightB = createSceneNode(POINT_LIGHT);
-    pointLightB->position = glm::vec3(-40.0, 40.0, 40.0);
+    pointLightB->position = glm::vec3(-60.0, 10.0, -120.0);
     pointLightB->id = 1;
     pointLightC = createSceneNode(POINT_LIGHT);
     pointLightC->position = glm::vec3(60.0, 10.0, -120.0);
     pointLightC->id = 2;
+
+    // pointLightA = createSceneNode(POINT_LIGHT);
+    // pointLightA->position = glm::vec3(0.0, 10.0, -120.0);
+    // pointLightA->id = 0;
+    // pointLightB = createSceneNode(POINT_LIGHT);
+    // pointLightB->position = glm::vec3(0.0, 10.0, -120.0);
+    // pointLightB->id = 1;
+    // pointLightC = createSceneNode(POINT_LIGHT);
+    // pointLightC->position = glm::vec3(0.0, 10.0, -120.0);
+    // pointLightC->id = 2;
+
 
     rootNode->children.push_back(boxNode);
     rootNode->children.push_back(padNode);
@@ -418,16 +429,22 @@ void renderFrame() {
 
     // task 1c - calculate positions of all point lights and pass
     glm::vec3 lightPos = pointLightA->modelMatrix * glm::vec4(0,0,0,1);
-    unsigned int pointLight = shader->getUniformFromName("light0");
+    unsigned int pointLight = shader->getUniformFromName("lights[0].position");
     glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
+    unsigned int color = shader->getUniformFromName("lights[0].color");
+    glUniform3fv(color, 1, glm::value_ptr(glm::vec3(1.0, 0.0, 0.0)));
 
     lightPos = pointLightB->modelMatrix * glm::vec4(0,0,0,1);
-    pointLight = shader->getUniformFromName("light1");
+    pointLight = shader->getUniformFromName("lights[1].position");
     glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
+    color = shader->getUniformFromName("lights[1].color");
+    glUniform3fv(color, 1, glm::value_ptr(glm::vec3(0.0, 1.0, 0.0)));
 
     lightPos = pointLightC->modelMatrix * glm::vec4(0,0,0,1);
-    pointLight = shader->getUniformFromName("light2");
+    pointLight = shader->getUniformFromName("lights[2].position");
     glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
+    color = shader->getUniformFromName("lights[2].color");
+    glUniform3fv(color, 1, glm::value_ptr(glm::vec3(0.0, 0.0, 1.0)));
 
     renderNode(rootNode);
 }
