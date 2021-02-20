@@ -134,19 +134,19 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     // task 1a - point light scene nodes with ids for referencing
     pointLightA = createSceneNode(POINT_LIGHT);
-    pointLightA->position = glm::vec3(30, -40, -70);
+    //pointLightA->position = glm::vec3(30, 10, -70);
     pointLightA->id = 0;
-    pointLightB = createSceneNode(POINT_LIGHT);
-    pointLightB->id = 1;
-    pointLightC = createSceneNode(POINT_LIGHT);
-    pointLightC->id = 2;
+    // pointLightB = createSceneNode(POINT_LIGHT);
+    // pointLightB->id = 1;
+    // pointLightC = createSceneNode(POINT_LIGHT);
+    // pointLightC->id = 2;
 
     rootNode->children.push_back(boxNode);
     rootNode->children.push_back(padNode);
     rootNode->children.push_back(ballNode);
-    rootNode->children.push_back(pointLightA);
-    rootNode->children.push_back(pointLightB);
-    rootNode->children.push_back(pointLightC);
+    padNode->children.push_back(pointLightA);
+    // rootNode->children.push_back(pointLightB);
+    // padNode->children.push_back(pointLightC);
 
     boxNode->vertexArrayObjectID = boxVAO;
     boxNode->VAOIndexCount = box.indices.size();
@@ -346,18 +346,18 @@ void updateFrame(GLFWwindow* window) {
         boxNode->position.z - (boxDimensions.z/2) + (padDimensions.z/2) + (1 - padPositionZ) * (boxDimensions.z - padDimensions.z)
     };
 
-    updateNodeTransformations(rootNode, VP);
+    updateNodeTransformations(rootNode, VP, glm::mat4(1.0));
 
 
 
 
 }
 
-void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar) {
+void updateNodeTransformations(SceneNode* node, glm::mat4 VP, glm::mat4 modelMatrix) {
     
     // task 1b - calculate model matrix separately
     // model matrix
-    node->modelMatrix = 
+    node->modelMatrix = modelMatrix *
               glm::translate(node->position)
             * glm::translate(node->referencePoint)
             * glm::rotate(node->rotation.y, glm::vec3(0,1,0))
@@ -367,7 +367,7 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
             * glm::translate(-node->referencePoint);
 
     // vp * parent model matrix * node model matrix
-    node->currentTransformationMatrix = transformationThusFar * node->modelMatrix;
+    node->currentTransformationMatrix = VP * node->modelMatrix;
 
     switch(node->nodeType) {
         case GEOMETRY: break;
@@ -376,7 +376,7 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
     }
 
     for(SceneNode* child : node->children) {
-        updateNodeTransformations(child, node->currentTransformationMatrix);
+        updateNodeTransformations(child, VP, node->modelMatrix);
     }
 }
 
@@ -388,17 +388,11 @@ void renderNode(SceneNode* node) {
     unsigned int model = shader->getUniformFromName("model");
     glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(node->modelMatrix));
 
-
     // task 1d - compute transpose of inverse of model matrix and take top 3x3 part of it
     glm::mat3 normal = glm::mat3(glm::transpose(glm::inverse(node->modelMatrix)));
     
     unsigned int normalMat = shader->getUniformFromName("normal_mat");
     glUniformMatrix3fv(normalMat, 1, GL_FALSE, glm::value_ptr(normal));
-
-    // glm::vec3 lightPos = pointLightA->currentTransformationMatrix * glm::vec4(0,0,0,1);
-    // std::cout << glm::to_string(lightPos) << std::endl;
-    // unsigned int pointLight = shader->getUniformFromName("light0");
-    // glUniformMatrix3fv(pointLight, 1, GL_FALSE, glm::value_ptr(lightPos));
 
     switch(node->nodeType) {
         case GEOMETRY:
@@ -407,21 +401,10 @@ void renderNode(SceneNode* node) {
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
             }
             break;
-        case POINT_LIGHT: {
-            // // task 1c - calculate positions of all point lights and pass
-            // // TODO check if these have to be set not in here but every time
-            glm::vec3 lightPos = node->currentTransformationMatrix * glm::vec4(0,0,0,1);
-            std::ostringstream identifier;
-            identifier << "light" << node->id;
-            
-            unsigned int pointLight = shader->getUniformFromName(identifier.str());
-            glUniformMatrix3fv(pointLight, 1, GL_FALSE, glm::value_ptr(lightPos));
-            std::cout << "light " << node->id << " position ";
-            std::cout << glm::to_string(lightPos) << std::endl;
-        }
-        
+        case POINT_LIGHT:
             break;
-        case SPOT_LIGHT: break;
+        case SPOT_LIGHT: 
+            break;
     }
 
     for(SceneNode* child : node->children) {
@@ -433,6 +416,22 @@ void renderFrame() {
     // int windowWidth, windowHeight;
     // glfwGetWindowSize(window, &windowWidth, &windowHeight);
     // glViewport(0, 0, windowWidth, windowHeight);
+
+    // task 1c - calculate positions of all point lights and pass
+    glm::vec3 lightPos = pointLightA->modelMatrix * glm::vec4(0,0,0,1);
+    std::cout << glm::to_string(lightPos) << std::endl;
+    unsigned int pointLight = shader->getUniformFromName("light0");
+    glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
+
+    lightPos = pointLightB->modelMatrix * glm::vec4(0,0,0,1);
+    std::cout << glm::to_string(lightPos) << std::endl;
+    pointLight = shader->getUniformFromName("light1");
+    glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
+
+    lightPos = pointLightC->modelMatrix * glm::vec4(0,0,0,1);
+    std::cout << glm::to_string(lightPos) << std::endl;
+    pointLight = shader->getUniformFromName("light1");
+    glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
 
     renderNode(rootNode);
 }
