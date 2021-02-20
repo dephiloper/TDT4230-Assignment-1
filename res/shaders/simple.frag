@@ -6,9 +6,10 @@ layout(location = 2) in vec3 vertexPos;
 
 out vec4 color;
 
+uniform vec3 viewPos;
 uniform mat4 model;
-
 uniform vec3 light0;
+
 // uniform vec3 light1;
 // uniform vec3 light2;
 
@@ -20,7 +21,7 @@ void main()
     //vec3 lights[3] = vec3[3](light0, light1, light2);
     vec3 lightColor = vec3(1.0);
 
-    // 1f - ambient color
+    // 1f - ambient light
     float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lightColor;
 
@@ -32,12 +33,21 @@ void main()
     //     // calculate diffuse intensity (dot of light direction and surface normal)
     //     float diffuseStrength = clamp(dot(lightDir, normal), 0, 1);
     // }
-
+    // 1g - diffuse light
     vec3 norm = normalize(normal);
     vec3 lightDir = normalize(light0 - vertexPos);
-    float diffuseStrength = max(dot(norm, lightDir), 0);
+    float diffuseStrength = max(dot(norm, lightDir), 0) * (1 - ambientStrength);
     vec3 diffuse = diffuseStrength * lightColor;
 
-    color = vec4(ambient + diffuse, 1.0);
+    // 1h - specular light
+    float specularStrength = 0.5;
+    float shininess = 32;
+    vec3 viewDir = normalize(viewPos - vertexPos);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+    vec3 specular = specularStrength * spec * lightColor;
+
+
+    color = vec4(ambient + diffuse + specular, 1.0);
     //color = vec4(0.5 * normalize(normal) + 0.5 * ambient + diffuse, 1.0);
 }
