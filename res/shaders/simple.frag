@@ -35,7 +35,8 @@ void main()
     // }
     // 1g - diffuse light
     vec3 norm = normalize(normal);
-    vec3 lightDir = normalize(light0 - vertexPos);
+    vec3 lightVec = light0 - vertexPos;
+    vec3 lightDir = normalize(lightVec);
     float diffuseStrength = max(dot(norm, lightDir), 0) * (1 - ambientStrength);
     vec3 diffuse = diffuseStrength * lightColor;
 
@@ -47,6 +48,15 @@ void main()
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     vec3 specular = specularStrength * spec * lightColor;
 
+    // 2a - attenuation
+    float lightDist = length(lightVec);
+    float la = pow(10, -3);
+    float lb = pow(10, -3);
+    float lc = pow(10, -3);
+    float L = 1 / (1 + la + lightDist * lb + pow(lightDist, 2) * lc);
+
+    diffuse *= L;
+    specular *= L;
 
     color = vec4(ambient + diffuse + specular, 1.0);
     //color = vec4(0.5 * normalize(normal) + 0.5 * ambient + diffuse, 1.0);
