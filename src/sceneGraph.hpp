@@ -18,7 +18,7 @@ enum SceneNodeType {
 };
 
 struct SceneNode {
-	SceneNode() {
+	SceneNode(SceneNodeType sceneNodeType) {
 		position = glm::vec3(0, 0, 0);
 		rotation = glm::vec3(0, 0, 0);
 		scale = glm::vec3(1, 1, 1);
@@ -26,8 +26,7 @@ struct SceneNode {
         referencePoint = glm::vec3(0, 0, 0);
         vertexArrayObjectID = -1;
         VAOIndexCount = 0;
-
-        nodeType = GEOMETRY;
+        nodeType = sceneNodeType;
 
 	}
 
@@ -40,6 +39,9 @@ struct SceneNode {
 	glm::vec3 rotation;
 	glm::vec3 scale;
 
+	// transformation matrix of the model itself
+	glm::mat4 modelMatrix;
+
 	// A transformation matrix representing the transformation of the node's location relative to its parent. This matrix is updated every frame.
 	glm::mat4 currentTransformationMatrix;
 
@@ -50,11 +52,13 @@ struct SceneNode {
 	int vertexArrayObjectID;
 	unsigned int VAOIndexCount;
 
+	unsigned int id;
+
 	// Node type is used to determine how to handle the contents of a node
 	SceneNodeType nodeType;
 };
 
-SceneNode* createSceneNode();
+SceneNode* createSceneNode(SceneNodeType sceneNodeType = GEOMETRY);
 void addChild(SceneNode* parent, SceneNode* child);
 void printNode(SceneNode* node);
 int totalChildren(SceneNode* parent);

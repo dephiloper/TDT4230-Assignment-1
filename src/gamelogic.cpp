@@ -5,6 +5,7 @@
 #include <utilities/shader.hpp>
 #include <glm/vec3.hpp>
 #include <iostream>
+#include <sstream>
 #include <utilities/timeutils.h>
 #include <utilities/mesh.h>
 #include <utilities/shapes.h>
@@ -17,6 +18,7 @@
 #include "sceneGraph.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include "utilities/imageLoader.hpp"
 #include "utilities/glfont.h"
@@ -37,6 +39,9 @@ SceneNode* rootNode;
 SceneNode* boxNode;
 SceneNode* ballNode;
 SceneNode* padNode;
+SceneNode* pointLightA;
+SceneNode* pointLightB;
+SceneNode* pointLightC;
 
 double ballRadius = 3.0f;
 
@@ -127,9 +132,21 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     padNode  = createSceneNode();
     ballNode = createSceneNode();
 
+    // task 1a - point light scene nodes with ids for referencing
+    pointLightA = createSceneNode(POINT_LIGHT);
+    pointLightA->position = glm::vec3(30, -40, -70);
+    pointLightA->id = 0;
+    pointLightB = createSceneNode(POINT_LIGHT);
+    pointLightB->id = 1;
+    pointLightC = createSceneNode(POINT_LIGHT);
+    pointLightC->id = 2;
+
     rootNode->children.push_back(boxNode);
     rootNode->children.push_back(padNode);
     rootNode->children.push_back(ballNode);
+    rootNode->children.push_back(pointLightA);
+    rootNode->children.push_back(pointLightB);
+    rootNode->children.push_back(pointLightC);
 
     boxNode->vertexArrayObjectID = boxVAO;
     boxNode->VAOIndexCount = box.indices.size();
@@ -139,11 +156,6 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     ballNode->vertexArrayObjectID = ballVAO;
     ballNode->VAOIndexCount = sphere.indices.size();
-
-
-
-
-
 
     getTimeDeltaSeconds();
 
@@ -242,7 +254,7 @@ void updateFrame(GLFWwindow* window) {
             double frameDuration = frameEnd - frameStart;
             double fractionFrameComplete = elapsedTimeInFrame / frameDuration;
 
-            double ballYCoord;
+            double ballYCoord = 0;
 
             KeyFrameAction currentOrigin = keyFrameDirections.at(currentKeyFrame);
             KeyFrameAction currentDestination = keyFrameDirections.at(currentKeyFrame + 1);
@@ -318,6 +330,7 @@ void updateFrame(GLFWwindow* window) {
                     glm::rotate(lookRotation, glm::vec3(0, 1, 0)) *
                     glm::translate(-cameraPosition);
 
+    // projection matrix * view matrix
     glm::mat4 VP = projection * cameraTransform;
 
     // Move and rotate various SceneNodes
@@ -341,7 +354,10 @@ void updateFrame(GLFWwindow* window) {
 }
 
 void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar) {
-    glm::mat4 transformationMatrix =
+    
+    // task 1b - calculate model matrix separately
+    // model matrix
+    node->modelMatrix = 
               glm::translate(node->position)
             * glm::translate(node->referencePoint)
             * glm::rotate(node->rotation.y, glm::vec3(0,1,0))
@@ -350,11 +366,12 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
             * glm::scale(node->scale)
             * glm::translate(-node->referencePoint);
 
-    node->currentTransformationMatrix = transformationThusFar * transformationMatrix;
+    // vp * parent model matrix * node model matrix
+    node->currentTransformationMatrix = transformationThusFar * node->modelMatrix;
 
     switch(node->nodeType) {
         case GEOMETRY: break;
-        case POINT_LIGHT: break;
+        case POINT_LIGHT:break;
         case SPOT_LIGHT: break;
     }
 
@@ -366,7 +383,22 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
 void renderNode(SceneNode* node) {
     unsigned int MVP = shader->getUniformFromName("MVP");
     glUniformMatrix4fv(MVP, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
-    //glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
+
+    // task 1b - pass matrix separately as uniform to shaders
+    unsigned int model = shader->getUniformFromName("model");
+    glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(node->modelMatrix));
+
+
+    // task 1d - compute transpose of inverse of model matrix and take top 3x3 part of it
+    glm::mat3 normal = glm::mat3(glm::transpose(glm::inverse(node->modelMatrix)));
+    
+    unsigned int normalMat = shader->getUniformFromName("normal_mat");
+    glUniformMatrix3fv(normalMat, 1, GL_FALSE, glm::value_ptr(normal));
+
+    // glm::vec3 lightPos = pointLightA->currentTransformationMatrix * glm::vec4(0,0,0,1);
+    // std::cout << glm::to_string(lightPos) << std::endl;
+    // unsigned int pointLight = shader->getUniformFromName("light0");
+    // glUniformMatrix3fv(pointLight, 1, GL_FALSE, glm::value_ptr(lightPos));
 
     switch(node->nodeType) {
         case GEOMETRY:
@@ -375,7 +407,20 @@ void renderNode(SceneNode* node) {
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
             }
             break;
-        case POINT_LIGHT: break;
+        case POINT_LIGHT: {
+            // // task 1c - calculate positions of all point lights and pass
+            // // TODO check if these have to be set not in here but every time
+            glm::vec3 lightPos = node->currentTransformationMatrix * glm::vec4(0,0,0,1);
+            std::ostringstream identifier;
+            identifier << "light" << node->id;
+            
+            unsigned int pointLight = shader->getUniformFromName(identifier.str());
+            glUniformMatrix3fv(pointLight, 1, GL_FALSE, glm::value_ptr(lightPos));
+            std::cout << "light " << node->id << " position ";
+            std::cout << glm::to_string(lightPos) << std::endl;
+        }
+        
+            break;
         case SPOT_LIGHT: break;
     }
 
@@ -384,7 +429,7 @@ void renderNode(SceneNode* node) {
     }
 }
 
-void renderFrame(GLFWwindow* window) {
+void renderFrame() {
     // int windowWidth, windowHeight;
     // glfwGetWindowSize(window, &windowWidth, &windowHeight);
     // glViewport(0, 0, windowWidth, windowHeight);

@@ -44,7 +44,7 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
 
 
         updateFrame(window);
-        renderFrame(window);
+        renderFrame();
 
 
 
