@@ -136,19 +136,20 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     // task 1a - point light scene nodes with ids for referencing
     pointLightA = createSceneNode(POINT_LIGHT);
     pointLightA->position = glm::vec3(0.0, 10.0, 0.0);
-    //pointLightA->position = glm::vec3(30, 10, -70);
     pointLightA->id = 0;
-    // pointLightB = createSceneNode(POINT_LIGHT);
-    // pointLightB->id = 1;
-    // pointLightC = createSceneNode(POINT_LIGHT);
-    // pointLightC->id = 2;
+    pointLightB = createSceneNode(POINT_LIGHT);
+    pointLightB->position = glm::vec3(-40.0, 40.0, 40.0);
+    pointLightB->id = 1;
+    pointLightC = createSceneNode(POINT_LIGHT);
+    pointLightC->position = glm::vec3(60.0, 10.0, -120.0);
+    pointLightC->id = 2;
 
     rootNode->children.push_back(boxNode);
     rootNode->children.push_back(padNode);
     rootNode->children.push_back(ballNode);
     padNode->children.push_back(pointLightA);
-    // rootNode->children.push_back(pointLightB);
-    // padNode->children.push_back(pointLightC);
+    rootNode->children.push_back(pointLightB);
+    rootNode->children.push_back(pointLightC);
 
     boxNode->vertexArrayObjectID = boxVAO;
     boxNode->VAOIndexCount = box.indices.size();
@@ -412,21 +413,21 @@ void renderFrame() {
     unsigned int cameraPos = shader->getUniformFromName("viewPos");
     glUniform3fv(cameraPos, 1, glm::value_ptr(cameraPosition));
 
+    unsigned int ballPos = shader->getUniformFromName("ballPos");
+    glUniform3fv(ballPos, 1, glm::value_ptr(ballPosition));
+
     // task 1c - calculate positions of all point lights and pass
     glm::vec3 lightPos = pointLightA->modelMatrix * glm::vec4(0,0,0,1);
-    std::cout << glm::to_string(lightPos) << std::endl;
     unsigned int pointLight = shader->getUniformFromName("light0");
     glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
 
-    // lightPos = pointLightB->modelMatrix * glm::vec4(0,0,0,1);
-    // std::cout << glm::to_string(lightPos) << std::endl;
-    // pointLight = shader->getUniformFromName("light1");
-    // glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
+    lightPos = pointLightB->modelMatrix * glm::vec4(0,0,0,1);
+    pointLight = shader->getUniformFromName("light1");
+    glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
 
-    // lightPos = pointLightC->modelMatrix * glm::vec4(0,0,0,1);
-    // std::cout << glm::to_string(lightPos) << std::endl;
-    // pointLight = shader->getUniformFromName("light1");
-    // glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
+    lightPos = pointLightC->modelMatrix * glm::vec4(0,0,0,1);
+    pointLight = shader->getUniformFromName("light2");
+    glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
 
     renderNode(rootNode);
 }
