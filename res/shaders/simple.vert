@@ -18,7 +18,9 @@ void main()
     // task 1e - transform normal by normal matrix
     normal = normalize(normal_mat * normal_in);
 
+    // vertex position in world space (multiplied by model matrix)
     vertexPos = vec3(model * vec4(position, 1.0));
+    
     textureCoordinates = textureCoordinates_in;
     gl_Position = MVP * vec4(position, 1.0f);
 }

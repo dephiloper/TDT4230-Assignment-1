@@ -39,6 +39,8 @@ SceneNode* rootNode;
 SceneNode* boxNode;
 SceneNode* ballNode;
 SceneNode* padNode;
+
+// point light scene node declaration
 SceneNode* pointLightA;
 SceneNode* pointLightB;
 SceneNode* pointLightC;
@@ -78,10 +80,6 @@ double mouseSensitivity = 1.0;
 double lastMouseX = windowWidth / 2;
 double lastMouseY = windowHeight / 2;
 void mouseCallback(GLFWwindow* window, double x, double y) {
-    // int windowWidth, windowHeight;
-    // glfwGetWindowSize(window, &windowWidth, &windowHeight);
-    // glViewport(0, 0, windowWidth, windowHeight);
-
     double deltaX = x - lastMouseX;
     double deltaY = y - lastMouseY;
 
@@ -144,6 +142,8 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     pointLightC->position = glm::vec3(60.0, 10.0, -120.0);
     pointLightC->id = 2;
 
+    // set all light sources to the same position
+    // combined light sources create a white color
     // pointLightA = createSceneNode(POINT_LIGHT);
     // pointLightA->position = glm::vec3(0.0, 10.0, -120.0);
     // pointLightA->id = 0;
@@ -158,6 +158,8 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     rootNode->children.push_back(boxNode);
     rootNode->children.push_back(padNode);
     rootNode->children.push_back(ballNode);
+    
+    // add light node A to the pad 
     padNode->children.push_back(pointLightA);
     rootNode->children.push_back(pointLightB);
     rootNode->children.push_back(pointLightC);
@@ -361,10 +363,11 @@ void updateFrame(GLFWwindow* window) {
     updateNodeTransformations(rootNode, VP, glm::mat4(1.0));
 }
 
+// pass model matrix of parent to calculate the correct model matrix for all children
 void updateNodeTransformations(SceneNode* node, glm::mat4 VP, glm::mat4 modelMatrix) {
     
     // task 1b - calculate model matrix separately
-    // model matrix
+    // model matrix = parentModelMatrix * own transformations
     node->modelMatrix = modelMatrix *
               glm::translate(node->position)
             * glm::translate(node->referencePoint)
@@ -421,25 +424,30 @@ void renderNode(SceneNode* node) {
 }
 
 void renderFrame() {
+    // pass view position to shader
     unsigned int cameraPos = shader->getUniformFromName("viewPos");
     glUniform3fv(cameraPos, 1, glm::value_ptr(cameraPosition));
 
+    // pass ball position to shader
     unsigned int ballPos = shader->getUniformFromName("ballPos");
     glUniform3fv(ballPos, 1, glm::value_ptr(ballPosition));
 
     // task 1c - calculate positions of all point lights and pass
+    // light[0]
     glm::vec3 lightPos = pointLightA->modelMatrix * glm::vec4(0,0,0,1);
     unsigned int pointLight = shader->getUniformFromName("lights[0].position");
     glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
     unsigned int color = shader->getUniformFromName("lights[0].color");
     glUniform3fv(color, 1, glm::value_ptr(glm::vec3(1.0, 0.0, 0.0)));
 
+    // light[1]
     lightPos = pointLightB->modelMatrix * glm::vec4(0,0,0,1);
     pointLight = shader->getUniformFromName("lights[1].position");
     glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
     color = shader->getUniformFromName("lights[1].color");
     glUniform3fv(color, 1, glm::value_ptr(glm::vec3(0.0, 1.0, 0.0)));
 
+    // light[2]
     lightPos = pointLightC->modelMatrix * glm::vec4(0,0,0,1);
     pointLight = shader->getUniformFromName("lights[2].position");
     glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
