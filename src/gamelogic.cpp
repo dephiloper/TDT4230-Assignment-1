@@ -125,17 +125,21 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     PNGImage image = loadPNGFile("../res/textures/charmap.png");
     // task 2-1c
     unsigned int texture = generateTexture(image);
-
+    std::cout << "image pixel count " << image.pixels.size() << std::endl;
+    
     // Create meshes
     Mesh pad = cube(padDimensions, glm::vec2(30, 40), true);
     Mesh box = cube(boxDimensions, glm::vec2(90), true, true);
     Mesh sphere = generateSphere(1.0, 40, 40);
+    // task 2-1g
     Mesh text = generateTextGeometryBuffer("hello", 39.0 / 29.0, 5 * 29.0);
 
     // Fill buffers
     unsigned int ballVAO = generateBuffer(sphere);
     unsigned int boxVAO  = generateBuffer(box);
     unsigned int padVAO  = generateBuffer(pad);
+
+    // task 2-1g
     unsigned int textVAO = generateBuffer(text);
 
     // Construct scene
@@ -154,9 +158,12 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     pointLightC = createSceneNode(POINT_LIGHT);
     pointLightC->position = glm::vec3(60.0, 10.0, -120.0);
     pointLightC->id = 2;
+
+    // task 2-1h
     textNode = createSceneNode(GEOMETRY_2D);
     textNode->id = 3;
     textNode->textureId = texture;
+    textNode->position = glm::vec3(windowWidth/2.0f, windowHeight/2.0f, 0.0f);
 
     rootNode->children.push_back(boxNode);
     rootNode->children.push_back(padNode);
@@ -433,6 +440,7 @@ void renderNode(SceneNode* node) {
 }
 
 void renderFrame() {
+    // task 2-1i enabling and disabling specific shaders
     gameShader->activate();
     // pass view position to shader
     unsigned int cameraPos = gameShader->getUniformFromName("viewPos");
@@ -471,14 +479,29 @@ void renderFrame() {
 }
 
 void renderUi() {
+    // task 2-1i enabling and disabling specific shaders
     uiShader->activate();
+
+    glm::mat4 modelMatrix =
+        glm::translate(textNode->position)
+        * glm::translate(textNode->referencePoint)
+        * glm::rotate(textNode->rotation.y, glm::vec3(0,1,0))
+        * glm::rotate(textNode->rotation.x, glm::vec3(1,0,0))
+        * glm::rotate(textNode->rotation.z, glm::vec3(0,0,1))
+        * glm::scale(textNode->scale)
+        * glm::translate(-textNode->referencePoint);
 
     glm::mat4 proj = glm::ortho(0.0f, (float)windowWidth, 0.0f, (float)windowHeight, -1.0f, 1.0f);
     unsigned int uiProj = uiShader->getUniformFromName("uiProj");
-    //unsigned int model = uiShader->getUniformFromName("model");
+    unsigned int model = uiShader->getUniformFromName("model");
     glUniformMatrix4fv(uiProj, 1, GL_FALSE, glm::value_ptr(proj));
+    glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
+    glUniform1i(glGetUniformLocation(uiShader->get(), "textureSampler"), 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textNode->textureId);
     glBindVertexArray(textNode->vertexArrayObjectID);
+
     glDrawElements(GL_TRIANGLES, textNode->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
 
     uiShader->deactivate();

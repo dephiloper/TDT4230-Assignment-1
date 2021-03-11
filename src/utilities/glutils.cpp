@@ -2,6 +2,7 @@
 #include <program.hpp>
 #include "glutils.h"
 #include <vector>
+#include <iostream>
 
 template <class T>
 unsigned int generateAttribute(int id, int elementsPerEntry, std::vector<T> data, bool normalize) {
@@ -45,5 +46,6 @@ unsigned int generateTexture(PNGImage &image) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    std::cout << "texture id: " << textureID << std::endl;
     return textureID;
 }

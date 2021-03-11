@@ -1,10 +1,11 @@
 #version 410 core
 
-layout(location = 0) out vec2 textureCoordinates;
+layout(location = 0) in vec2 textureCoordinates;
+uniform sampler2D textureSampler;
 out vec4 color;
 
-// task 2-1i
+// task 2-1i&j
 void main()
 {
-	color = vec4(1.0, 0.0, 0.0, 1.0);
+	color = texture(textureSampler, textureCoordinates);
 }

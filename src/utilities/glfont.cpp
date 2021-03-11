@@ -8,7 +8,7 @@ Mesh generateTextGeometryBuffer(std::string text, float characterHeightOverWidth
 
     unsigned int vertexCount = 4 * text.length();
     unsigned int indexCount = 6 * text.length();
-    unsigned int textureCoordinateCount = 6 * text.length();
+    unsigned int textureCoordinateCount = 4 * text.length();
 
     Mesh mesh;
 
@@ -37,21 +37,20 @@ Mesh generateTextGeometryBuffer(std::string text, float characterHeightOverWidth
 
         // task 2-1f
         int charIndex = text.at(i);
-        std::cout << "char index: " << charIndex << std::endl;
-        float charWidth = characterWidth / totalTextWidth;
+        float charWidth = 1.0 / 128.0;
         float charStartX = charIndex / 128.0;
         float charEndX = charStartX + charWidth;
-        // unsure about this
         float charStartY = 0.0;
         float charEndY = 1.0;
+        std::cout << "start: " << charStartX << "end: " << charEndX << std::endl;
 
-        // no clue if this is correct
-        mesh.textureCoordinates.at(6 * i + 0) = {charStartX, charStartY};
-        mesh.textureCoordinates.at(6 * i + 1) = {charEndX, charStartY};
-        mesh.textureCoordinates.at(6 * i + 2) = {charEndX, charEndX};
-        mesh.textureCoordinates.at(6 * i + 3) = {charStartX, charStartY};
-        mesh.textureCoordinates.at(6 * i + 4) = {charEndX, charEndY};
-        mesh.textureCoordinates.at(6 * i + 5) = {charStartX, charEndY};
+        mesh.textureCoordinates.at(4 * i + 0) = {charStartX, charStartY};
+        mesh.textureCoordinates.at(4 * i + 1) = {charEndX, charStartY};
+        mesh.textureCoordinates.at(4 * i + 2) = {charEndX, charEndY};
+
+        mesh.textureCoordinates.at(4 * i + 0) = {charStartX, charStartY};
+        mesh.textureCoordinates.at(4 * i + 2) = {charEndX, charEndY};
+        mesh.textureCoordinates.at(4 * i + 3) = {charStartX, charEndY};
     }
 
     return mesh;
