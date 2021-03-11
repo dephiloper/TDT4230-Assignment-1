@@ -15,7 +15,7 @@ layout(location = 2) out vec3 vertexPos;
 
 void main()
 {
-    // task 1e - transform normal by normal matrix
+    // task 1-1e - transform normal by normal matrix
     normal = normalize(normal_mat * normal_in);
 
     // vertex position in world space (multiplied by model matrix)

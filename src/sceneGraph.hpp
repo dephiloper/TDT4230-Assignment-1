@@ -13,8 +13,9 @@
 #include <chrono>
 #include <fstream>
 
+// task 2-1h
 enum SceneNodeType {
-	GEOMETRY, POINT_LIGHT, SPOT_LIGHT
+	GEOMETRY, POINT_LIGHT, SPOT_LIGHT, GEOMETRY_2D, GEOMETRY_NORMAL_MAP
 };
 
 struct SceneNode {
@@ -27,7 +28,6 @@ struct SceneNode {
         vertexArrayObjectID = -1;
         VAOIndexCount = 0;
         nodeType = sceneNodeType;
-
 	}
 
 	// A list of all children that belong to this node.
@@ -51,8 +51,12 @@ struct SceneNode {
 	// The ID of the VAO containing the "appearance" of this SceneNode.
 	int vertexArrayObjectID;
 	unsigned int VAOIndexCount;
-
+	
 	unsigned int id;
+
+	// task 2-1h
+	unsigned int textureId;
+	unsigned int normalMapTextureId;
 
 	// Node type is used to determine how to handle the contents of a node
 	SceneNodeType nodeType;

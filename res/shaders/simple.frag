@@ -43,42 +43,42 @@ void main()
 
     vec3 outputColor = vec3(0);
 
-    // 1f - ambient light (only one, only white)
+    // task 1-1f - ambient light (only one, only white)
     // float ambientStrength = 0.1;
     // vec3 ambient = ambientStrength * vec3(1.0);
 
     for (int i = 0; i < 3; i++) {
 
-        // 1f - ambient light
+        // task 1-1f - ambient light
         float ambientStrength = 0.1;
         //vec3 ambient = ambientStrength * lights[i].color;
         vec3 ambient = ambientStrength * vec3(1.0);
 
-        // 1g - diffuse light
+        // task 1-1g - diffuse light
         vec3 lightVec = lights[i].position - vertexPos;
         vec3 lightDir = normalize(lightVec);
-        float diffuseStrength = max(dot(norm, lightDir), 0) * (1 - ambientStrength) * 0.5;
+        float diffuseStrength = max(dot(norm, lightDir), 0) * (1 - ambientStrength);
         vec3 diffuse = diffuseStrength * vec3(1.0);//lights[i].color;
 
-        // 1h - specular light
+        // task 1-1h - specular light
         float specularStrength = 0.1;
         vec3 reflectDir = reflect(-lightDir, norm);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
         vec3 specular = specularStrength * spec * vec3(1.0);//lights[i].color;
 
-        // 2a - attenuation
+        // task 1-2a - attenuation
         float lightDist = length(lightVec);
         float L = 1 / (1 + la + lightDist * lb + pow(lightDist, 2) * lc);
 
-        // 2c - shadows
+        // task 1-2c - shadows
         // float lit = 1.0;
         vec3 rej = reject(vertexBallVec, lightVec);
         
-        // 2c - hard shadows
+        // task 1-2c - hard shadows
         // if (length(rej) < ballRadius)
             // lit = 0.2;
 
-        // 4 - smooth shadows
+        // task 1-4 - smooth shadows
         float lit = smoothstep(ballRadius - .5, ballRadius + .5, length(rej));
         
         // // Do not cast when:
@@ -90,10 +90,10 @@ void main()
         diffuse *= L * lit;
         specular *= L * lit;
 
-        outputColor += ambient + diffuse; //+ specular;
+        outputColor += ambient + diffuse + specular;
     }
 
-    // 2b - add dither
-    //color = vec4(outputColor + dither(textureCoordinates), 1.0);
-    color = vec4(0.5 * normalize(normal) + 0.5, 1.0);
+    // task 1-2b - add dither
+    color = vec4(outputColor + dither(textureCoordinates), 1.0);
+    //color = vec4(0.5 * normalize(normal) + 0.5, 1.0);
 }

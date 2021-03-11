@@ -7,3 +7,4 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 VP, glm::mat4 modelMat
 void initGame(GLFWwindow* window, CommandLineOptions options);
 void updateFrame(GLFWwindow* window);
 void renderFrame();
+void renderUi();

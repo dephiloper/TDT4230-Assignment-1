@@ -4,6 +4,7 @@
 #include <SFML/Audio/SoundBuffer.hpp>
 #include <utilities/shader.hpp>
 #include <glm/vec3.hpp>
+#include <glm/glm.hpp>
 #include <iostream>
 #include <sstream>
 #include <utilities/timeutils.h>
@@ -45,11 +46,14 @@ SceneNode* pointLightA;
 SceneNode* pointLightB;
 SceneNode* pointLightC;
 
+SceneNode* textNode;
+
 double ballRadius = 3.0f;
 
 // These are heap allocated, because they should not be initialised at the start of the program
 sf::SoundBuffer* buffer;
-Gloom::Shader* shader;
+Gloom::Shader* gameShader;
+Gloom::Shader* uiShader;
 sf::Sound* sound;
 
 const glm::vec3 boxDimensions(180, 90, 90);
@@ -79,6 +83,7 @@ double gameElapsedTime = debug_startTime;
 double mouseSensitivity = 1.0;
 double lastMouseX = windowWidth / 2;
 double lastMouseY = windowHeight / 2;
+
 void mouseCallback(GLFWwindow* window, double x, double y) {
     double deltaX = x - lastMouseX;
     double deltaY = y - lastMouseY;
@@ -111,19 +116,27 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     glfwSetCursorPosCallback(window, mouseCallback);
 
-    shader = new Gloom::Shader();
-    shader->makeBasicShader("../res/shaders/simple.vert", "../res/shaders/simple.frag");
-    shader->activate();
+    gameShader = new Gloom::Shader();
+    uiShader = new Gloom::Shader();
+    gameShader->makeBasicShader("../res/shaders/simple.vert", "../res/shaders/simple.frag");
+    uiShader->makeBasicShader("../res/shaders/ui.vert", "../res/shaders/ui.frag");
+
+    // task 2-1b
+    PNGImage image = loadPNGFile("../res/textures/charmap.png");
+    // task 2-1c
+    unsigned int texture = generateTexture(image);
 
     // Create meshes
     Mesh pad = cube(padDimensions, glm::vec2(30, 40), true);
     Mesh box = cube(boxDimensions, glm::vec2(90), true, true);
     Mesh sphere = generateSphere(1.0, 40, 40);
+    Mesh text = generateTextGeometryBuffer("hello", 39.0 / 29.0, 5 * 29.0);
 
     // Fill buffers
     unsigned int ballVAO = generateBuffer(sphere);
     unsigned int boxVAO  = generateBuffer(box);
     unsigned int padVAO  = generateBuffer(pad);
+    unsigned int textVAO = generateBuffer(text);
 
     // Construct scene
     rootNode = createSceneNode();
@@ -131,7 +144,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     padNode  = createSceneNode();
     ballNode = createSceneNode();
 
-    //task 1a - point light scene nodes with ids for referencing
+    //task 1-1a - point light scene nodes with ids for referencing
     pointLightA = createSceneNode(POINT_LIGHT);
     pointLightA->position = glm::vec3(0.0, 10.0, 0.0);
     pointLightA->id = 0;
@@ -141,19 +154,9 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     pointLightC = createSceneNode(POINT_LIGHT);
     pointLightC->position = glm::vec3(60.0, 10.0, -120.0);
     pointLightC->id = 2;
-
-    // set all light sources to the same position
-    // combined light sources create a white color
-    // pointLightA = createSceneNode(POINT_LIGHT);
-    // pointLightA->position = glm::vec3(0.0, 10.0, -120.0);
-    // pointLightA->id = 0;
-    // pointLightB = createSceneNode(POINT_LIGHT);
-    // pointLightB->position = glm::vec3(0.0, 10.0, -120.0);
-    // pointLightB->id = 1;
-    // pointLightC = createSceneNode(POINT_LIGHT);
-    // pointLightC->position = glm::vec3(0.0, 10.0, -120.0);
-    // pointLightC->id = 2;
-
+    textNode = createSceneNode(GEOMETRY_2D);
+    textNode->id = 3;
+    textNode->textureId = texture;
 
     rootNode->children.push_back(boxNode);
     rootNode->children.push_back(padNode);
@@ -163,6 +166,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     padNode->children.push_back(pointLightA);
     rootNode->children.push_back(pointLightB);
     rootNode->children.push_back(pointLightC);
+    rootNode->children.push_back(textNode);
 
     boxNode->vertexArrayObjectID = boxVAO;
     boxNode->VAOIndexCount = box.indices.size();
@@ -172,6 +176,9 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     ballNode->vertexArrayObjectID = ballVAO;
     ballNode->VAOIndexCount = sphere.indices.size();
+
+    textNode->vertexArrayObjectID = textVAO;
+    textNode->VAOIndexCount = text.indices.size();
 
     getTimeDeltaSeconds();
 
@@ -366,7 +373,7 @@ void updateFrame(GLFWwindow* window) {
 // pass model matrix of parent to calculate the correct model matrix for all children
 void updateNodeTransformations(SceneNode* node, glm::mat4 VP, glm::mat4 modelMatrix) {
     
-    // task 1b - calculate model matrix separately
+    // task 1-1b - calculate model matrix separately
     // model matrix = parentModelMatrix * own transformations
     node->modelMatrix = modelMatrix *
               glm::translate(node->position)
@@ -392,17 +399,19 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 VP, glm::mat4 modelMat
 }
 
 void renderNode(SceneNode* node) {
-    unsigned int MVP = shader->getUniformFromName("MVP");
+    if (node->nodeType == SceneNodeType::GEOMETRY_2D) return;
+    
+    unsigned int MVP = gameShader->getUniformFromName("MVP");
     glUniformMatrix4fv(MVP, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
 
-    // task 1b - pass matrix separately as uniform to shaders
-    unsigned int model = shader->getUniformFromName("model");
+    // task 1-1b - pass matrix separately as uniform to shaders
+    unsigned int model = gameShader->getUniformFromName("model");
     glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(node->modelMatrix));
 
-    // task 1d - compute transpose of inverse of model matrix and take top 3x3 part of it
+    // task 1-1d - compute transpose of inverse of model matrix and take top 3x3 part of it
     glm::mat3 normal = glm::mat3(glm::transpose(glm::inverse(node->modelMatrix)));
     
-    unsigned int normalMat = shader->getUniformFromName("normal_mat");
+    unsigned int normalMat = gameShader->getUniformFromName("normal_mat");
     glUniformMatrix3fv(normalMat, 1, GL_FALSE, glm::value_ptr(normal));
 
     switch(node->nodeType) {
@@ -424,35 +433,56 @@ void renderNode(SceneNode* node) {
 }
 
 void renderFrame() {
+    gameShader->activate();
     // pass view position to shader
-    unsigned int cameraPos = shader->getUniformFromName("viewPos");
+    unsigned int cameraPos = gameShader->getUniformFromName("viewPos");
     glUniform3fv(cameraPos, 1, glm::value_ptr(cameraPosition));
 
     // pass ball position to shader
-    unsigned int ballPos = shader->getUniformFromName("ballPos");
+    unsigned int ballPos = gameShader->getUniformFromName("ballPos");
     glUniform3fv(ballPos, 1, glm::value_ptr(ballPosition));
 
-    // task 1c - calculate positions of all point lights and pass
+    // task 1-1c - calculate positions of all point lights and pass
     // light[0]
     glm::vec3 lightPos = pointLightA->modelMatrix * glm::vec4(0,0,0,1);
-    unsigned int pointLight = shader->getUniformFromName("lights[0].position");
+    unsigned int pointLight = gameShader->getUniformFromName("lights[0].position");
     glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
-    unsigned int color = shader->getUniformFromName("lights[0].color");
+    unsigned int color = gameShader->getUniformFromName("lights[0].color");
     glUniform3fv(color, 1, glm::value_ptr(glm::vec3(1.0, 0.0, 0.0)));
 
     // light[1]
     lightPos = pointLightB->modelMatrix * glm::vec4(0,0,0,1);
-    pointLight = shader->getUniformFromName("lights[1].position");
+    pointLight = gameShader->getUniformFromName("lights[1].position");
     glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
-    color = shader->getUniformFromName("lights[1].color");
+    color = gameShader->getUniformFromName("lights[1].color");
     glUniform3fv(color, 1, glm::value_ptr(glm::vec3(0.0, 1.0, 0.0)));
 
     // light[2]
     lightPos = pointLightC->modelMatrix * glm::vec4(0,0,0,1);
-    pointLight = shader->getUniformFromName("lights[2].position");
+    pointLight = gameShader->getUniformFromName("lights[2].position");
     glUniform3fv(pointLight, 1, glm::value_ptr(lightPos));
-    color = shader->getUniformFromName("lights[2].color");
+    color = gameShader->getUniformFromName("lights[2].color");
     glUniform3fv(color, 1, glm::value_ptr(glm::vec3(0.0, 0.0, 1.0)));
 
     renderNode(rootNode);
+    gameShader->deactivate();
+
+    renderUi();
+}
+
+void renderUi() {
+    uiShader->activate();
+
+    glm::mat4 proj = glm::ortho(0.0f, (float)windowWidth, 0.0f, (float)windowHeight, -1.0f, 1.0f);
+    unsigned int uiProj = uiShader->getUniformFromName("uiProj");
+    //unsigned int model = uiShader->getUniformFromName("model");
+    glUniformMatrix4fv(uiProj, 1, GL_FALSE, glm::value_ptr(proj));
+
+    glBindVertexArray(textNode->vertexArrayObjectID);
+    glDrawElements(GL_TRIANGLES, textNode->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+
+    uiShader->deactivate();
+
+    //unsigned int textureCoords = gameShader->getUniformFromName("textureCoords");
+    //glUniform3fv(textureCoords, 1, glm::value_ptr(textNode.));
 }
