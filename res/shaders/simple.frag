@@ -8,6 +8,8 @@ struct LightSource {
 layout(location = 0) in vec3 normal;
 layout(location = 1) in vec2 textureCoordinates;
 layout(location = 2) in vec3 vertexPos;
+layout(location = 3) in mat3 tbn;
+
 
 out vec4 color;
 
@@ -15,11 +17,15 @@ uniform vec3 light0;
 uniform vec3 light1;
 uniform vec3 light2;
 
+uniform float useTexture;
+
 uniform LightSource lights[3];
 
 uniform mat4 model;
 uniform vec3 viewPos;
 uniform vec3 ballPos;
+uniform sampler2D textureSampler;
+uniform sampler2D normalMapSampler;
 
 const float ballRadius = 3.0;
 
@@ -33,6 +39,11 @@ vec3 reject(vec3 from, vec3 onto) {
 void main()
 {
     vec3 norm = normalize(normal);
+    
+    // task 2-3h
+    if (useTexture > 0.5)
+        norm = normalize(tbn * normalize((texture(textureSampler, textureCoordinates).rgb * 2 - 1))) * vec3(1, 1, -1);
+    
     vec3 viewDir = normalize(viewPos - vertexPos);
     float shininess = 128;
     vec3 vertexBallVec = ballPos - vertexPos;
@@ -47,7 +58,8 @@ void main()
     // float ambientStrength = 0.1;
     // vec3 ambient = ambientStrength * vec3(1.0);
 
-    for (int i = 0; i < 3; i++) {
+    // use only one light source
+    for (int i = 0; i < 1; i++) {
 
         // task 1-1f - ambient light
         float ambientStrength = 0.1;
@@ -91,9 +103,18 @@ void main()
         specular *= L * lit;
 
         outputColor += ambient + diffuse + specular;
+
+        // task 2-3d
+        if (useTexture > 0.5)
+            outputColor *= texture(textureSampler, textureCoordinates).rgb;
     }
 
     // task 1-2b - add dither
-    color = vec4(outputColor + dither(textureCoordinates), 1.0);
     //color = vec4(0.5 * normalize(normal) + 0.5, 1.0);
+    
+    // task 2-3i
+    //color = vec4(tbn * (texture(normalMapSampler, textureCoordinates).xyz * 2 - 1), 1.0);
+    //color = vec4(texture(normalMapSampler, textureCoordinates).xyz * 2 - 1, 1.0);
+    
+    color = vec4(outputColor + dither(textureCoordinates), 1.0);
 }

@@ -124,12 +124,26 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     // task 2-1b
     PNGImage image = loadPNGFile("../res/textures/charmap.png");
     // task 2-1c
-    unsigned int texture = generateTexture(image);
-    std::cout << "image pixel count " << image.pixels.size() << std::endl;
+    unsigned int textureCharMap = generateTexture(image);
+
+    // task 2-1b
+    image = loadPNGFile("../res/textures/Brick03_col.png");
+    unsigned int textureDiffuse = generateTexture(image);
+
+    image = loadPNGFile("../res/textures/Brick03_nrm.png");
+    unsigned int textureNormalMap = generateTexture(image);
     
     // Create meshes
     Mesh pad = cube(padDimensions, glm::vec2(30, 40), true);
     Mesh box = cube(boxDimensions, glm::vec2(90), true, true);
+    std::vector<glm::vec3> tangents;
+	std::vector<glm::vec3> bitangents;
+
+    computeTangentBasis(box.indices, box.vertices, box.textureCoordinates, box.normals, tangents, bitangents);
+    box.tangents = tangents;
+    box.bitangents = bitangents;
+    std::cout << glm::to_string(box.tangents.at(0)) << std::endl;
+
     Mesh sphere = generateSphere(1.0, 40, 40);
     // task 2-1g
     Mesh text = generateTextGeometryBuffer("hello", 39.0 / 29.0, 5 * 29.0);
@@ -144,25 +158,24 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     // Construct scene
     rootNode = createSceneNode();
-    boxNode  = createSceneNode();
+    // task 2-3a
+    boxNode  = createSceneNode(GEOMETRY_NORMAL_MAP);
+    boxNode->textureId = textureDiffuse;
+    boxNode->normalMapTextureId = textureNormalMap;
     padNode  = createSceneNode();
     ballNode = createSceneNode();
 
     //task 1-1a - point light scene nodes with ids for referencing
     pointLightA = createSceneNode(POINT_LIGHT);
     pointLightA->position = glm::vec3(0.0, 10.0, 0.0);
-    pointLightA->id = 0;
     pointLightB = createSceneNode(POINT_LIGHT);
     pointLightB->position = glm::vec3(-60.0, 10.0, -120.0);
-    pointLightB->id = 1;
     pointLightC = createSceneNode(POINT_LIGHT);
     pointLightC->position = glm::vec3(60.0, 10.0, -120.0);
-    pointLightC->id = 2;
 
     // task 2-1h
     textNode = createSceneNode(GEOMETRY_2D);
-    textNode->id = 3;
-    textNode->textureId = texture;
+    textNode->textureId = textureCharMap;
     textNode->position = glm::vec3(windowWidth/2.0f, windowHeight/2.0f, 0.0f);
 
     rootNode->children.push_back(boxNode);
@@ -432,6 +445,23 @@ void renderNode(SceneNode* node) {
             break;
         case SPOT_LIGHT: 
             break;
+        case GEOMETRY_NORMAL_MAP:
+            if(node->vertexArrayObjectID != -1) {
+                unsigned int useTexture = gameShader->getUniformFromName("useTexture");
+                glUniform1f(useTexture, 1.0f);
+
+                glActiveTexture(GL_TEXTURE0);
+                glUniform1i(glGetUniformLocation(gameShader->get(), "textureSampler"), 0);
+                glBindTexture(GL_TEXTURE_2D, node->textureId);
+
+                glActiveTexture(GL_TEXTURE1);
+                glUniform1i(glGetUniformLocation(gameShader->get(), "normalMapSampler"), 1);
+                glBindTexture(GL_TEXTURE_2D, node->normalMapTextureId);
+
+                glBindVertexArray(node->vertexArrayObjectID);
+                glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+                glUniform1f(useTexture, 0.0f);
+            }
     }
 
     for(SceneNode* child : node->children) {
@@ -442,6 +472,7 @@ void renderNode(SceneNode* node) {
 void renderFrame() {
     // task 2-1i enabling and disabling specific shaders
     gameShader->activate();
+
     // pass view position to shader
     unsigned int cameraPos = gameShader->getUniformFromName("viewPos");
     glUniform3fv(cameraPos, 1, glm::value_ptr(cameraPosition));
@@ -497,7 +528,6 @@ void renderUi() {
     glUniformMatrix4fv(uiProj, 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
-    glUniform1i(glGetUniformLocation(uiShader->get(), "textureSampler"), 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textNode->textureId);
     glBindVertexArray(textNode->vertexArrayObjectID);
