@@ -1,14 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include "utils/shader.h"
-#include "utils/renderer.h"
-
-float vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.0f,  0.5f, 0.0f
-};
+#include "utils/shader.hpp"
+#include "utils/renderer.hpp"
 
 Shader gameShader{};
 Renderer renderer{};
@@ -21,6 +15,10 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height)
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void mouseCallback(GLFWwindow *window, double xPos, double yPos) {

@@ -1,4 +1,4 @@
-#include "shader.h"
+#include "shader.hpp"
 
 /**
 * https://stackoverflow.com/a/2602258
@@ -20,9 +20,9 @@ std::string Shader::readFile(const std::string &filepath) {
 int Shader::load(const std::string &vertexPath, const std::string &fragmentPath) {
     std::string vertexSource = readFile(vertexPath);
     std::string fragmentSource = readFile(fragmentPath);
-    const char *vShaderSource = vertexSource.c_str(); // https://stackoverflow.com/a/30804288
+    const char *vShaderSource = vertexSource.c_str();  // https://stackoverflow.com/a/30804288
     const char *fShaderSource = fragmentSource.c_str();
-    
+
     // compile the shader
     unsigned int vertex, fragment;
 
@@ -48,7 +48,8 @@ int Shader::load(const std::string &vertexPath, const std::string &fragmentPath)
     glGetProgramiv(ID, GL_LINK_STATUS, &success);
     if (!success) {
         glGetProgramInfoLog(ID, 512, nullptr, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
+                  << infoLog << std::endl;
         return -1;
     }
 
@@ -63,7 +64,7 @@ void Shader::use() {
 }
 
 void Shader::setBool(const std::string &name, bool value) {
-    glUniform1i(glGetUniformLocation(ID, name.c_str()), (int) value);
+    glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
 }
 
 void Shader::setInt(const std::string &name, int value) {
@@ -101,7 +102,8 @@ unsigned int Shader::createShader(const char *shaderSource, GLint shaderType, co
     glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
     if (!success) {
         glGetShaderInfoLog(shaderId, 512, nullptr, infoLog);
-        std::cout << "ERROR::SHADER::" << shaderName << "::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cout << "ERROR::SHADER::" << shaderName << "::COMPILATION_FAILED\n"
+                  << infoLog << std::endl;
     }
 
     return shaderId;

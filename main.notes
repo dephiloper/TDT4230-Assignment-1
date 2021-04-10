@@ -1,0 +1,7 @@
+TODO:
+[√] render first triangle
+[√] indices to render a triangle
+[ ] render pyramid
+[ ] rotate pyramid by transforming it
+[ ] use indicies to render pyramid
+[ ] add normals to to pyramid

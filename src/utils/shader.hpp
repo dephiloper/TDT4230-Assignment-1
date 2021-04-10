@@ -1,5 +1,5 @@
-#ifndef SHADER_H
-#define SHADER_H
+#ifndef SHADER_HPP
+#define SHADER_HPP
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -36,4 +36,4 @@ private:
     static unsigned int createShader(const char* shaderSource, GLint shaderType, const std::string& shaderName);
 };
 
-#endif //SHADER_H
+#endif //SHADER_HPP

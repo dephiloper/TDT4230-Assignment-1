@@ -1,24 +1,40 @@
-#include "renderer.h"
+#include "renderer.hpp"
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/string_cast.hpp"
 
-void Renderer::init()
-{
+void Renderer::init() {
     // load shaders
     if (gameShader.load("../res/shaders/game.vert", "../res/shaders/game.frag") != 0)
         std::cout << "Error loading shaders" << std::endl;
 
-    triangleVao = loadObject(vertices, 3, false, false);
+    pyramidVao = loadObject(vertices, indices, 3, false, false);
 }
 
-void Renderer::render()
-{
+void Renderer::render() {
     gameShader.use();
-    glBindVertexArray(triangleVao);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glm::mat4 model = glm::mat4(1.0f);
+    //model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0, 0.0, 0.0));
+    model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0, 1.0, 0.0));
+
+    gameShader.setMat4("model", model);
+
+    glm::mat4 view = glm::mat4(1.0f);
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f)); 
+
+    gameShader.setMat4("view", view);
+
+    glm::mat4 projection;
+    projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+
+    gameShader.setMat4("projection", projection);
+
+
+    glBindVertexArray(pyramidVao);
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 }
 
-unsigned int
-Renderer::loadObject(const std::vector<float> &vertices, unsigned short dimensions, bool hasColor, bool hasTexture)
-{
+unsigned int Renderer::loadObject(const std::vector<float> &vertices, const std::vector<unsigned int> &indices, unsigned short dimensions, bool hasColor, bool hasTexture) {
     unsigned int index = 0;
     unsigned int stride = dimensions;
     unsigned int offset = 0;
@@ -28,14 +44,15 @@ Renderer::loadObject(const std::vector<float> &vertices, unsigned short dimensio
     if (hasTexture)
         stride += 2;
 
-    unsigned int VBO, VAO;      // create unique id
-    glGenBuffers(1, &VBO);      // create buffer object to corresponding id
-    glGenVertexArrays(1, &VAO); // create vertex array object
+    unsigned int VBO, VAO, EBO;  // create unique id
+    glGenVertexArrays(1, &VAO);  // create vertex array object
+    glGenBuffers(1, &VBO);       // create buffer object to corresponding id
+    glGenBuffers(1, &EBO);       // create buffer object to corresponding id
 
     // 1. bind buffers and vertex array object
     // -------------------------------------------------------------------
     glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO); // bind created buffer to buffer type GL_ARRAY_BUFFER (type of vertex buffer)
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);  // bind created buffer to buffer type GL_ARRAY_BUFFER (type of vertex buffer)
 
     // after binding, every buffer calls on GL_ARRAY_BUFFER will be used to configure VBO
 
@@ -50,23 +67,23 @@ Renderer::loadObject(const std::vector<float> &vertices, unsigned short dimensio
     // 3.3: GL_STREAM_DRAW (data> changes on every draw) -> 3.2 & 3.3 data is placed in memory for faster drawing
 
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
     // 3. set vertex attribute pointers (need explanation)
     glVertexAttribPointer(index, dimensions, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void *)nullptr);
     glEnableVertexAttribArray(0);
     offset += dimensions;
 
-    if (hasColor)
-    { // rgb = 3
+    if (hasColor) {  // rgb = 3
         index = 1;
         glVertexAttribPointer(index, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void *)(offset * sizeof(float)));
         glEnableVertexAttribArray(index);
         offset += 3;
     }
 
-    if (hasTexture)
-    { // uv = 2
+    if (hasTexture) {  // uv = 2
         index = 2;
         glVertexAttribPointer(index, 2, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void *)(offset * sizeof(float)));
         glEnableVertexAttribArray(index);
