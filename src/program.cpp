@@ -37,7 +37,7 @@ void mainLoop(GLFWwindow *window) {
         
         // rendering
         glClearColor(0.18f, 0.4f, 0.18f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         renderer.render();
         
@@ -71,9 +71,9 @@ int main()
         return -1;
     }
 
-    // glEnable(GL_DEPTH_TEST);
-    // glEnable(GL_BLEND);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // // callback for window resize
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
