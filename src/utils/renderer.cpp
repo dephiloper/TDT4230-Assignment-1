@@ -10,13 +10,37 @@ void Renderer::init() {
     // load shaders
     if (gameShader.load("../res/shaders/game.vert", "../res/shaders/game.frag") != 0)
         std::cout << "Error loading shaders" << std::endl;
+
+    computeMesh(glm::vec4((float)glfwGetTime() * 0.2, 0, 0, 1), 50, 4);
+
 }
 
-void Renderer::computeMesh(glm::vec4 seed, size_t gridSize) {
+size_t coordsToIndex(size_t gridSize, size_t x, size_t y, size_t z) {
+    return x + (y * gridSize) + (z * gridSize * gridSize);
+}
+
+glm::vec3 indexToCoords(size_t gridSize, size_t index) {
+    size_t z = index / (gridSize * gridSize);
+    size_t y = (index % (gridSize * gridSize)) / gridSize;
+    size_t x = index % gridSize;
+    return glm::vec3(x, y, z);
+}
+
+void Renderer::computeMesh(glm::vec4 seed, size_t gridSize, float density) {
     std::vector<float> verts;
     std::vector<float> normals;
 
     glm::vec3 center(gridSize / 2.0f);
+
+    std::vector<float> grid;
+    grid.resize((gridSize + 1) * (gridSize + 1) * (gridSize + 1));
+    for (size_t x = 0; x < gridSize + 1; x++) {
+        for (size_t y = 0; y < gridSize + 1; y++) {
+            for (size_t z = 0; z < gridSize + 1; z++) {
+                grid[coordsToIndex(gridSize, x, y, z)] = glm::perlin(glm::vec4(glm::vec3(x, y, z) / (float)gridSize * density, 0.0) + seed);
+            }
+        }
+    }
 
     for (size_t x = 0; x < gridSize; x++) {
         for (size_t y = 0; y < gridSize; y++) {
@@ -24,43 +48,22 @@ void Renderer::computeMesh(glm::vec4 seed, size_t gridSize) {
                 int cubeIndex = 0;  // represents the configuration of a cube (e.g. 0, 1, 2 are below the iso level 00000111 -> cubeIndex = 7)
                 float isolevel = -0.2;
 
-                // set the cube coordinates of a individual grid cube
-                /* 4--------5
-                  / |     / |
-                7---|----6  |
-                |  0-----|--1
-                | /      | /
-                3--------2
-                */
-                std::vector<glm::vec3> cubeCoords = {
-                    glm::vec3(x, y, z),          // 0
-                    glm::vec3(x + 1, y, z),      // 1
-                    glm::vec3(x + 1, y, z + 1),  // 2
-                    glm::vec3(x, y, z + 1),      // 3
-
-                    glm::vec3(x, y + 1, z),          // 4
-                    glm::vec3(x + 1, y + 1, z),      // 5
-                    glm::vec3(x + 1, y + 1, z + 1),  // 6
-                    glm::vec3(x, y + 1, z + 1),      // 7
-                };
-
-                std::vector<float> cube;
-
-                // calculate the distance to the center and put it as
-                // values for the current cube
-                for (size_t i = 0; i < cubeCoords.size(); i++) {
-                    //float dist = glm::length(cubeCoords[i] - center);
-                    float weight = glm::perlin(glm::vec4(cubeCoords[i] / (float)gridSize, 0.0) + seed);
-                    //std::cout << "weight: " << weight << std::endl;
-                    //std::cout << "dist: " << dist << std::endl;
-                    cube.push_back(weight);
-                }
+                std::vector<float> cube = {
+                    grid[coordsToIndex(gridSize, x, y, z)],
+                    grid[coordsToIndex(gridSize, x + 1, y, z)],
+                    grid[coordsToIndex(gridSize, x + 1, y, z + 1)],
+                    grid[coordsToIndex(gridSize, x, y, z + 1)],
+                    grid[coordsToIndex(gridSize, x, y + 1, z)],
+                    grid[coordsToIndex(gridSize, x + 1, y + 1, z)],
+                    grid[coordsToIndex(gridSize, x + 1, y + 1, z + 1)],
+                    grid[coordsToIndex(gridSize, x, y + 1, z + 1)]};
 
                 // 256 possible cube/mesh types (= 2^8 <- cube vertices)
                 if (cube[0] < isolevel) cubeIndex |= 1;
                 if (cube[1] < isolevel) cubeIndex |= 2;
                 if (cube[2] < isolevel) cubeIndex |= 4;
                 if (cube[3] < isolevel) cubeIndex |= 8;
+
                 if (cube[4] < isolevel) cubeIndex |= 16;
                 if (cube[5] < isolevel) cubeIndex |= 32;
                 if (cube[6] < isolevel) cubeIndex |= 64;
@@ -188,14 +191,15 @@ glm::vec3 Renderer::interpolateVerts(glm::vec3 p1, glm::vec3 p2, float isolevel,
 }
 
 void Renderer::render() {
-    computeMesh(glm::vec4(0,0,0,(float)glfwGetTime() * 0.1), 10);
+    // computeMesh(glm::vec4(0, (float)glfwGetTime() * 0.2, 0, (float)glfwGetTime() * 0.02), 12);
+    // computeMesh(glm::vec4((float)glfwGetTime() * 0.2, 0, 0, 1), 20, 4);
 
     gameShader.use();
 
     glm::mat4 model = glm::mat4(1.0f);
     // model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0, 0.0, 0.0));
-    model = glm::rotate(model, (float)glfwGetTime() * 0.2f, glm::vec3(0.0, 1.0, 0.0));
-    model = glm::scale(model, glm::vec3(2.0, 2.0, 2.0));
+    // model = glm::rotate(model, (float)glfwGetTime() * 0.2f, glm::vec3(0.0, 1.0, 0.0));
+    // model = glm::scale(model, glm::vec3(2.0, 2.0, 2.0));
 
     gameShader.setMat4("model", model);
 

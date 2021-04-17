@@ -17,14 +17,13 @@ class Renderer {
     int screenWidth = 800;
     int screenHeight = 600;
     std::string shaderDir;
-    float elapsedTime = 0.0f;
 
     std::vector<float> vertices = {
-         0.0,  0.5,  0.0, // top
-        -0.5, -0.5,  0.5, // bottom left
-         0.5, -0.5,  0.5, // bottom right
-         0.5, -0.5, -0.5, // top right
-        -0.5, -0.5, -0.5  // top left  
+        0.0, 0.5, 0.0,    // top
+        -0.5, -0.5, 0.5,  // bottom left
+        0.5, -0.5, 0.5,   // bottom right
+        0.5, -0.5, -0.5,  // top right
+        -0.5, -0.5, -0.5  // top left
     };
     std::vector<unsigned int> indices = {
         // note that we start from 0!
@@ -33,8 +32,7 @@ class Renderer {
         3, 4, 0,
         4, 1, 0,
         1, 2, 3,
-        1, 3, 4
-    };
+        1, 3, 4};
     unsigned int meshVao;
     unsigned int nTriangles;
 
@@ -47,7 +45,7 @@ class Renderer {
     unsigned int loadMesh(const std::vector<float> &vertices, const std::vector<float> &normals, bool hasColor = false);
     // static unsigned int loadTexture(unsigned int vao, const std::string& texturePath, bool alphaChannel);
     glm::vec3 interpolateVerts(glm::vec3 p1, glm::vec3 p2, float isolevel, float v1, float v2);
-    void computeMesh(glm::vec4 seed, size_t gridSize);
+    void computeMesh(glm::vec4 seed, size_t gridSize, float density);
 };
 
 #endif  //SHADER_HPP
