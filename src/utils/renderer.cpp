@@ -2,18 +2,20 @@
 
 #include "lookup.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
-#include "glm/gtx/string_cast.hpp"
 #include <glm/gtc/noise.hpp>
+
+#include "glm/gtx/string_cast.hpp"
 
 void Renderer::init() {
     // load shaders
     if (gameShader.load("../res/shaders/game.vert", "../res/shaders/game.frag") != 0)
         std::cout << "Error loading shaders" << std::endl;
+}
 
+void Renderer::computeMesh(glm::vec4 seed, size_t gridSize) {
     std::vector<float> verts;
     std::vector<float> normals;
 
-    unsigned int gridSize = 10;
     glm::vec3 center(gridSize / 2.0f);
 
     for (size_t x = 0; x < gridSize; x++) {
@@ -48,7 +50,7 @@ void Renderer::init() {
                 // values for the current cube
                 for (size_t i = 0; i < cubeCoords.size(); i++) {
                     //float dist = glm::length(cubeCoords[i] - center);
-                    float weight = glm::perlin(glm::vec4(cubeCoords[i] / (float)gridSize, 10));
+                    float weight = glm::perlin(glm::vec4(cubeCoords[i] / (float)gridSize, 0.0) + seed);
                     //std::cout << "weight: " << weight << std::endl;
                     //std::cout << "dist: " << dist << std::endl;
                     cube.push_back(weight);
@@ -98,29 +100,29 @@ void Renderer::init() {
                     // Find the vertices where the surface intersects the cube
                     // based on the previously calculated cubeIndex
                     if (edgeTable[cubeIndex] & 1)
-                        edgeVerts.at(0) = interpolateVerts(cubeVerts[0], cubeVerts[1]);  // edge between 0 - 1
+                        edgeVerts.at(0) = interpolateVerts(cubeVerts[0], cubeVerts[1], isolevel, cube[0], cube[1]);  // edge between 0 - 1
                     if (edgeTable[cubeIndex] & 2)
-                        edgeVerts.at(1) = interpolateVerts(cubeVerts[1], cubeVerts[2]);  // edge between 1 - 2
+                        edgeVerts.at(1) = interpolateVerts(cubeVerts[1], cubeVerts[2], isolevel, cube[1], cube[2]);  // edge between 1 - 2
                     if (edgeTable[cubeIndex] & 4)
-                        edgeVerts.at(2) = interpolateVerts(cubeVerts[2], cubeVerts[3]);  // edge between 2 - 3
+                        edgeVerts.at(2) = interpolateVerts(cubeVerts[2], cubeVerts[3], isolevel, cube[2], cube[3]);  // edge between 2 - 3
                     if (edgeTable[cubeIndex] & 8)
-                        edgeVerts.at(3) = interpolateVerts(cubeVerts[3], cubeVerts[0]);  // edge between 3 - 0
+                        edgeVerts.at(3) = interpolateVerts(cubeVerts[3], cubeVerts[0], isolevel, cube[3], cube[0]);  // edge between 3 - 0
                     if (edgeTable[cubeIndex] & 16)
-                        edgeVerts.at(4) = interpolateVerts(cubeVerts[4], cubeVerts[5]);  // edge between 4 - 5
+                        edgeVerts.at(4) = interpolateVerts(cubeVerts[4], cubeVerts[5], isolevel, cube[4], cube[5]);  // edge between 4 - 5
                     if (edgeTable[cubeIndex] & 32)
-                        edgeVerts.at(5) = interpolateVerts(cubeVerts[5], cubeVerts[6]);  // edge between 5 - 6
+                        edgeVerts.at(5) = interpolateVerts(cubeVerts[5], cubeVerts[6], isolevel, cube[5], cube[6]);  // edge between 5 - 6
                     if (edgeTable[cubeIndex] & 64)
-                        edgeVerts.at(6) = interpolateVerts(cubeVerts[6], cubeVerts[7]);  // edge between 6 - 7
+                        edgeVerts.at(6) = interpolateVerts(cubeVerts[6], cubeVerts[7], isolevel, cube[6], cube[7]);  // edge between 6 - 7
                     if (edgeTable[cubeIndex] & 128)
-                        edgeVerts.at(7) = interpolateVerts(cubeVerts[7], cubeVerts[4]);  // edge between 7 - 4
+                        edgeVerts.at(7) = interpolateVerts(cubeVerts[7], cubeVerts[4], isolevel, cube[7], cube[4]);  // edge between 7 - 4
                     if (edgeTable[cubeIndex] & 256)
-                        edgeVerts.at(8) = interpolateVerts(cubeVerts[0], cubeVerts[4]);  // edge between 0 - 4
+                        edgeVerts.at(8) = interpolateVerts(cubeVerts[0], cubeVerts[4], isolevel, cube[0], cube[4]);  // edge between 0 - 4
                     if (edgeTable[cubeIndex] & 512)
-                        edgeVerts.at(9) = interpolateVerts(cubeVerts[1], cubeVerts[5]);  // edge between 1 - 5
+                        edgeVerts.at(9) = interpolateVerts(cubeVerts[1], cubeVerts[5], isolevel, cube[1], cube[5]);  // edge between 1 - 5
                     if (edgeTable[cubeIndex] & 1024)
-                        edgeVerts.at(10) = interpolateVerts(cubeVerts[2], cubeVerts[6]);  // edge between 2 - 6
+                        edgeVerts.at(10) = interpolateVerts(cubeVerts[2], cubeVerts[6], isolevel, cube[2], cube[6]);  // edge between 2 - 6
                     if (edgeTable[cubeIndex] & 2048)
-                        edgeVerts.at(11) = interpolateVerts(cubeVerts[3], cubeVerts[7]);  // edge between 3 - 7
+                        edgeVerts.at(11) = interpolateVerts(cubeVerts[3], cubeVerts[7], isolevel, cube[3], cube[7]);  // edge between 3 - 7
                 }
 
                 // loop over all the triangles from the triangle table at the specific
@@ -173,11 +175,21 @@ void Renderer::init() {
     nTriangles = verts.size();
 }
 
-glm::vec3 Renderer::interpolateVerts(glm::vec3 p1, glm::vec3 p2) {
-    return (p1 + p2) / 2.0f;
+glm::vec3 Renderer::interpolateVerts(glm::vec3 p1, glm::vec3 p2, float isolevel, float v1, float v2) {
+    float mu = (isolevel - v1) / (v2 - v1);
+    glm::vec3 p;
+    p.x = p1.x + mu * (p2.x - p1.x);
+    p.y = p1.y + mu * (p2.y - p1.y);
+    p.z = p1.z + mu * (p2.z - p1.z);
+
+    return p;
+
+    //return (p1 + p2) / 2.0f;
 }
 
 void Renderer::render() {
+    computeMesh(glm::vec4(0,0,0,(float)glfwGetTime() * 0.1), 10);
+
     gameShader.use();
 
     glm::mat4 model = glm::mat4(1.0f);
