@@ -13,14 +13,14 @@ void Renderer::init() {
     std::vector<float> verts;
     std::vector<float> normals;
 
-    unsigned int gridSize = 50;
+    unsigned int gridSize = 10;
     glm::vec3 center(gridSize / 2.0f);
 
     for (size_t x = 0; x < gridSize; x++) {
         for (size_t y = 0; y < gridSize; y++) {
             for (size_t z = 0; z < gridSize; z++) {
                 int cubeIndex = 0;  // represents the configuration of a cube (e.g. 0, 1, 2 are below the iso level 00000111 -> cubeIndex = 7)
-                float isolevel = 25;
+                float isolevel = -0.2;
 
                 // set the cube coordinates of a individual grid cube
                 /* 4--------5
@@ -47,9 +47,11 @@ void Renderer::init() {
                 // calculate the distance to the center and put it as
                 // values for the current cube
                 for (size_t i = 0; i < cubeCoords.size(); i++) {
-                    float dist = glm::length(cubeCoords[i] - center);
+                    //float dist = glm::length(cubeCoords[i] - center);
+                    float weight = glm::perlin(glm::vec4(cubeCoords[i] / (float)gridSize, 10));
+                    //std::cout << "weight: " << weight << std::endl;
                     //std::cout << "dist: " << dist << std::endl;
-                    cube.push_back(dist);
+                    cube.push_back(weight);
                 }
 
                 // 256 possible cube/mesh types (= 2^8 <- cube vertices)
