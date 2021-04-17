@@ -1,70 +1,86 @@
-// Local headers
-#include "program.hpp"
-#include "utilities/window.hpp"
-#include "gamelogic.h"
-#include <glm/glm.hpp>
-// glm::translate, glm::rotate, glm::scale, glm::perspective
-#include <glm/gtc/matrix_transform.hpp>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <iostream>
-#include <SFML/Audio.hpp>
-#include <SFML/System/Time.hpp>
-#include <utilities/shapes.h>
-#include <utilities/glutils.h>
-#include <utilities/shader.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <utilities/timeutils.h>
+#include "utils/shader.hpp"
+#include "utils/renderer.hpp"
 
+Shader gameShader{};
+Renderer renderer{};
 
-void runProgram(GLFWwindow* window, CommandLineOptions options)
+void framebufferSizeCallback(GLFWwindow *window, int width, int height)
 {
-    // Enable depth (Z) buffer (accept "closest" fragment)
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glViewport(0, 0, width, height);
+}
 
-    // Configure miscellaneous OpenGL settings
-    glEnable(GL_CULL_FACE);
+void processInput(GLFWwindow* window) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
 
-    // Disable built-in dithering
-    glDisable(GL_DITHER);
+void mouseCallback(GLFWwindow *window, double xPos, double yPos) {
+    // todo process mouse movement input
+}
 
-    // Enable transparency
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods) {
+    // todo process mouse press input
+}
 
-    // Set default colour after clearing the colour buffer
-    glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
-
-	initGame(window, options);
-
-    // Rendering Loop
-    while (!glfwWindowShouldClose(window))
-    {
-	    // Clear colour and depth buffers
-	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-        updateFrame(window);
-        renderFrame();
-
-
-
-
-
-        // Handle other events
-        glfwPollEvents();
-        handleKeyboardInput(window);
-
-        // Flip buffers
+void mainLoop(GLFWwindow *window) {
+    // render loop
+    while (!glfwWindowShouldClose(window)) {
+        // process input
+        processInput(window);
+        
+        // rendering
+        glClearColor(0.18f, 0.4f, 0.18f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        renderer.render();
+        
         glfwSwapBuffers(window);
+        glfwPollEvents();
     }
 }
 
-
-void handleKeyboardInput(GLFWwindow* window)
+int main()
 {
-    // Use escape key for terminating the GLFW window
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, GL_TRUE);
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+    // create window
+    GLFWwindow *window = glfwCreateWindow(800, 600, "Marching Cubes", NULL, NULL);
+    
+    if (window == NULL) {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
     }
+
+    glfwMakeContextCurrent(window);
+
+    // initialize glad
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // // callback for window resize
+    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+
+    renderer.init();
+    mainLoop(window);
+
+    glfwTerminate();
+    return 0;
 }
