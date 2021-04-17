@@ -43,7 +43,7 @@ class Renderer {
    private:
     Shader gameShader{};
     unsigned int loadObject(const std::vector<float> &vertices, const std::vector<unsigned int> &indices, unsigned short dimensions, bool hasColor = false, bool hasTexture = false);
-    unsigned int loadMesh(const std::vector<float> &vertices, bool hasColor = false);
+    unsigned int loadMesh(const std::vector<float> &vertices, const std::vector<float> &normals, bool hasColor = false);
     // static unsigned int loadTexture(unsigned int vao, const std::string& texturePath, bool alphaChannel);
     glm::vec3 interpolateVerts(const glm::vec3 p1, const glm::vec3 p2);
 };
