@@ -46,6 +46,7 @@ class Renderer {
     unsigned int loadMesh(const std::vector<float> &vertices, const std::vector<float> &normals, bool hasColor = false);
     // static unsigned int loadTexture(unsigned int vao, const std::string& texturePath, bool alphaChannel);
     glm::vec3 interpolateVerts(const glm::vec3 p1, const glm::vec3 p2);
+    void renderSphere(size_t gridSize);
 };
 
 #endif  //SHADER_HPP

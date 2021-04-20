@@ -9,18 +9,20 @@ void Renderer::init() {
     // load shaders
     if (gameShader.load("../res/shaders/game.vert", "../res/shaders/game.frag") != 0)
         std::cout << "Error loading shaders" << std::endl;
+}
 
+void Renderer::renderSphere(size_t gridSize) {
     std::vector<float> verts;
     std::vector<float> normals;
 
-    unsigned int gridSize = 50;
+    //unsigned int gridSize = 50;
     glm::vec3 center(gridSize / 2.0f);
 
     for (size_t x = 0; x < gridSize; x++) {
         for (size_t y = 0; y < gridSize; y++) {
             for (size_t z = 0; z < gridSize; z++) {
                 int cubeIndex = 0;  // represents the configuration of a cube (e.g. 0, 1, 2 are below the iso level 00000111 -> cubeIndex = 7)
-                float isolevel = 25;
+                float isolevel = center.x;
 
                 // set the cube coordinates of a individual grid cube
                 /* 4--------5
@@ -181,7 +183,7 @@ void Renderer::render() {
     glm::mat4 model = glm::mat4(1.0f);
     // model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0, 0.0, 0.0));
     model = glm::rotate(model, (float)glfwGetTime() * 0.2f, glm::vec3(0.0, 1.0, 0.0));
-    model = glm::scale(model, glm::vec3(2.0, 2.0, 2.0));
+    model = glm::scale(model, glm::vec3(1.5, 1.5, 1.5));
 
     gameShader.setMat4("model", model);
 
@@ -194,6 +196,11 @@ void Renderer::render() {
     projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
     gameShader.setMat4("projection", projection);
+
+    std::cout << glm::sin(glfwGetTime() * 0.2) * 0.5f + 0.5f << std::endl;
+    int gridSize = (int) ((glm::sin(glfwGetTime() * 0.5f) * 0.5f + 0.5f) * 25.0f);
+    std::cout << gridSize << std::endl;
+    renderSphere(gridSize);
 
     glBindVertexArray(meshVao);
     glDrawArrays(GL_TRIANGLES, 0, nTriangles);
