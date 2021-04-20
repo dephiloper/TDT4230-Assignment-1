@@ -8,48 +8,49 @@ void Renderer::init() {
     // load shaders
     if (gameShader.load("../res/shaders/game.vert", "../res/shaders/game.frag") != 0)
         std::cout << "Error loading shaders" << std::endl;
+}
 
+void Renderer::renderMesh(size_t cubeIndex) {
     std::vector<float> verts;
-    int center = 15;
-    
-    for (size_t x = 0; x < 10; x++) {
-        for (size_t y = 0; y < 10; y++) {
-            for (size_t z = 0; z < 10; z++) {
-                int cubeIndex = 0;
-                float isolevel = 0.5;
+    // int center = 15;
 
-                std::vector<float> cube;
+    // for (size_t x = 0; x < 10; x++) {
+    //     for (size_t y = 0; y < 10; y++) {
+    //         for (size_t z = 0; z < 10; z++) {
+    float isolevel = 1;
 
-                int dist = x + y + z - center;
-                dist = abs(dist);
-                cube.push_back(dist < 3 ? 0 : 1);
+    // std::vector<float> cube = {};
 
-                dist = (x + 1) + y + z - center;
-                dist = abs(dist);
-                cube.push_back(dist < 3 ? 0 : 1);
+    // int dist = x + y + z - center;
+    // dist = abs(dist);
+    // cube.push_back(dist < 3 ? 0 : 1);
 
-                int dist = x + y + z - center;
-                dist = abs(dist);
-                cube.push_back((x + 1) + y + (z + 1) - center < 3 ? 0 : 1);
-                cube.push_back(x + y + (z + 1) - center < 3 ? 0 : 1);
-                cube.push_back(x + (y + 1) + z - center < 3 ? 0 : 1);
-                cube.push_back((x + 1) + (y + 1) + z - center < 3 ? 0 : 1);
-                cube.push_back((x + 1) + (y + 1) + (z + 1) - center < 3 ? 0 : 1);
-                cube.push_back(x + (y + 1) + (z + 1) - center < 3 ? 0 : 1);
+    // dist = (x + 1) + y + z - center;
+    // dist = abs(dist);
+    // cube.push_back(dist < 3 ? 0 : 1);
 
-                if (cube[0] < isolevel) cubeIndex |= 1;
-                if (cube[1] < isolevel) cubeIndex |= 2;
-                if (cube[2] < isolevel) cubeIndex |= 4;
-                if (cube[3] < isolevel) cubeIndex |= 8;
-                if (cube[4] < isolevel) cubeIndex |= 16;
-                if (cube[5] < isolevel) cubeIndex |= 32;
-                if (cube[6] < isolevel) cubeIndex |= 64;
-                if (cube[7] < isolevel) cubeIndex |= 128;
+    // dist = x + y + z - center;
+    // dist = abs(dist);
+    // cube.push_back((x + 1) + y + (z + 1) - center < 3 ? 0 : 1);
+    // cube.push_back(x + y + (z + 1) - center < 3 ? 0 : 1);
+    // cube.push_back(x + (y + 1) + z - center < 3 ? 0 : 1);
+    // cube.push_back((x + 1) + (y + 1) + z - center < 3 ? 0 : 1);
+    // cube.push_back((x + 1) + (y + 1) + (z + 1) - center < 3 ? 0 : 1);
+    // cube.push_back(x + (y + 1) + (z + 1) - center < 3 ? 0 : 1);
 
-                std::vector<glm::vec3> vertlist(12);
+    // if (cube[0] < isolevel) cubeIndex |= 1;
+    // if (cube[1] < isolevel) cubeIndex |= 2;
+    // if (cube[2] < isolevel) cubeIndex |= 4;
+    // if (cube[3] < isolevel) cubeIndex |= 8;
+    // if (cube[4] < isolevel) cubeIndex |= 16;
+    // if (cube[5] < isolevel) cubeIndex |= 32;
+    // if (cube[6] < isolevel) cubeIndex |= 64;
+    // if (cube[7] < isolevel) cubeIndex |= 128;
 
-                /* Find the vertices where the surface intersects the cube */
-                /* 4--------5
+    std::vector<glm::vec3> vertlist(12);
+
+    /* Find the vertices where the surface intersects the cube */
+    /* 4--------5
                   / |     / |
                 7---|----6  |
                 |  0-----|--1
@@ -65,60 +66,61 @@ void Renderer::init() {
                 7: (-0.5,  0.5,  0.5)
                 */
 
-                /* Cube is entirely in/out of the surface */
-                if (edgeTable[cubeIndex] != 0) {
-                    std::vector<glm::vec3> cubeVerts = {
-                        glm::vec3(-0.5, -0.5, -0.5),  // 0
-                        glm::vec3(0.5, -0.5, -0.5),   // 1
-                        glm::vec3(0.5, -0.5, 0.5),    // 2
-                        glm::vec3(-0.5, -0.5, 0.5),   // 3
-                        glm::vec3(-0.5, 0.5, -0.5),   // 4
-                        glm::vec3(0.5, 0.5, -0.5),    // 5
-                        glm::vec3(0.5, 0.5, 0.5),     // 6
-                        glm::vec3(-0.5, 0.5, 0.5)     // 7
-                    };
+    /* Cube is entirely in/out of the surface */
+    if (edgeTable[cubeIndex] != 0) {
+        std::vector<glm::vec3> cubeVerts = {
+            glm::vec3(-0.5, -0.5, -0.5),  // 0
+            glm::vec3(0.5, -0.5, -0.5),  // 1
+            glm::vec3(0.5, -0.5, 0.5),  // 2
+            glm::vec3(-0.5, -0.5, 0.5),  // 3
 
-                    // for (size_t i = 0; i < 16; i++)
-                    // {
-                    //     std::cout << triTable[cubeIndex][i] << std::endl;
-                    // }
+            glm::vec3(-0.5, 0.5, -0.5),  // 4
+            glm::vec3(0.5, 0.5, -0.5),  // 5
+            glm::vec3(0.5, 0.5, 0.5),  // 6
+            glm::vec3(-0.5, 0.5, 0.5),  // 7
+        };
 
-                    if (edgeTable[cubeIndex] & 1)
-                        vertlist.at(0) = interpolateVerts(cubeVerts[0], cubeVerts[1]);  // edge between 0 - 1
-                    if (edgeTable[cubeIndex] & 2)
-                        vertlist.at(1) = interpolateVerts(cubeVerts[1], cubeVerts[2]);  // edge between 1 - 2
-                    if (edgeTable[cubeIndex] & 4)
-                        vertlist.at(2) = interpolateVerts(cubeVerts[2], cubeVerts[3]);  // edge between 2 - 3
-                    if (edgeTable[cubeIndex] & 8)
-                        vertlist.at(3) = interpolateVerts(cubeVerts[3], cubeVerts[0]);  // edge between 3 - 0
-                    if (edgeTable[cubeIndex] & 16)
-                        vertlist.at(4) = interpolateVerts(cubeVerts[4], cubeVerts[5]);  // edge between 4 - 5
-                    if (edgeTable[cubeIndex] & 32)
-                        vertlist.at(5) = interpolateVerts(cubeVerts[5], cubeVerts[6]);  // edge between 5 - 6
-                    if (edgeTable[cubeIndex] & 64)
-                        vertlist.at(6) = interpolateVerts(cubeVerts[6], cubeVerts[7]);  // edge between 6 - 7
-                    if (edgeTable[cubeIndex] & 128)
-                        vertlist.at(7) = interpolateVerts(cubeVerts[7], cubeVerts[4]);  // edge between 7 - 4
-                    if (edgeTable[cubeIndex] & 256)
-                        vertlist.at(8) = interpolateVerts(cubeVerts[0], cubeVerts[4]);  // edge between 0 - 4
-                    if (edgeTable[cubeIndex] & 512)
-                        vertlist.at(9) = interpolateVerts(cubeVerts[1], cubeVerts[5]);  // edge between 1 - 5
-                    if (edgeTable[cubeIndex] & 1024)
-                        vertlist.at(10) = interpolateVerts(cubeVerts[2], cubeVerts[6]);  // edge between 2 - 6
-                    if (edgeTable[cubeIndex] & 2048)
-                        vertlist.at(11) = interpolateVerts(cubeVerts[3], cubeVerts[7]);  // edge between 3 - 7
-                }
+        // for (size_t i = 0; i < 16; i++)
+        // {
+        //     std::cout << triTable[cubeIndex][i] << std::endl;
+        // }
 
-                for (size_t i = 0; triTable[cubeIndex][i] != -1; i += 3) {
-                    for (size_t v = 0; v < 3; v++) {     // for each vertex 
-                            verts.push_back((vertlist[triTable[cubeIndex][i + v]][0] + x) / 9);
-                            verts.push_back((vertlist[triTable[cubeIndex][i + v]][1] + y) / 9);
-                            verts.push_back((vertlist[triTable[cubeIndex][i + v]][2] + z) / 9);
-                    }
-                        //for (size_t c = 0; c < 3; c++)  // for each coordinate
-                }
-            }
+        if (edgeTable[cubeIndex] & 1)
+            vertlist.at(0) = interpolateVerts(cubeVerts[0], cubeVerts[1]);  // edge between 0 - 1
+        if (edgeTable[cubeIndex] & 2)
+            vertlist.at(1) = interpolateVerts(cubeVerts[1], cubeVerts[2]);  // edge between 1 - 2
+        if (edgeTable[cubeIndex] & 4)
+            vertlist.at(2) = interpolateVerts(cubeVerts[2], cubeVerts[3]);  // edge between 2 - 3
+        if (edgeTable[cubeIndex] & 8)
+            vertlist.at(3) = interpolateVerts(cubeVerts[3], cubeVerts[0]);  // edge between 3 - 0
+        if (edgeTable[cubeIndex] & 16)
+            vertlist.at(4) = interpolateVerts(cubeVerts[4], cubeVerts[5]);  // edge between 4 - 5
+        if (edgeTable[cubeIndex] & 32)
+            vertlist.at(5) = interpolateVerts(cubeVerts[5], cubeVerts[6]);  // edge between 5 - 6
+        if (edgeTable[cubeIndex] & 64)
+            vertlist.at(6) = interpolateVerts(cubeVerts[6], cubeVerts[7]);  // edge between 6 - 7
+        if (edgeTable[cubeIndex] & 128)
+            vertlist.at(7) = interpolateVerts(cubeVerts[7], cubeVerts[4]);  // edge between 7 - 4
+        if (edgeTable[cubeIndex] & 256)
+            vertlist.at(8) = interpolateVerts(cubeVerts[0], cubeVerts[4]);  // edge between 0 - 4
+        if (edgeTable[cubeIndex] & 512)
+            vertlist.at(9) = interpolateVerts(cubeVerts[1], cubeVerts[5]);  // edge between 1 - 5
+        if (edgeTable[cubeIndex] & 1024)
+            vertlist.at(10) = interpolateVerts(cubeVerts[2], cubeVerts[6]);  // edge between 2 - 6
+        if (edgeTable[cubeIndex] & 2048)
+            vertlist.at(11) = interpolateVerts(cubeVerts[3], cubeVerts[7]);  // edge between 3 - 7
+    }
+
+    for (size_t i = 0; triTable[cubeIndex][i] != -1; i += 3) {
+        for (size_t v = 0; v < 3; v++) {  // for each vertex
+            verts.push_back((vertlist[triTable[cubeIndex][i + v]][0]));
+            verts.push_back((vertlist[triTable[cubeIndex][i + v]][1]));
+            verts.push_back((vertlist[triTable[cubeIndex][i + v]][2]));
         }
+        //for (size_t c = 0; c < 3; c++)  // for each coordinate
+        // }
+        // }
+        // }
     }
 
     meshVao = loadMesh(verts);
@@ -132,9 +134,14 @@ glm::vec3 Renderer::interpolateVerts(glm::vec3 p1, glm::vec3 p2) {
 void Renderer::render() {
     gameShader.use();
 
+    if ((float)glfwGetTime() > timePassed) {
+        renderMesh(timePassed / 2);
+        timePassed += 2;
+    }
+
     glm::mat4 model = glm::mat4(1.0f);
     // model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0, 0.0, 0.0));
-    model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0, 0.0, 0.0));
+    // model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0, 0.0, 0.0));
 
     gameShader.setMat4("model", model);
 

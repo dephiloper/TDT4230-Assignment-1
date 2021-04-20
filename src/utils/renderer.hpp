@@ -17,6 +17,7 @@ class Renderer {
     int screenWidth = 800;
     int screenHeight = 600;
     std::string shaderDir;
+    int timePassed = 0;
 
     std::vector<float> vertices = {
          0.0,  0.5,  0.0, // top
@@ -46,6 +47,7 @@ class Renderer {
     unsigned int loadMesh(const std::vector<float> &vertices, bool hasColor = false);
     // static unsigned int loadTexture(unsigned int vao, const std::string& texturePath, bool alphaChannel);
     glm::vec3 interpolateVerts(const glm::vec3 p1, const glm::vec3 p2);
+    void renderMesh(size_t cubeIndex);
 };
 
 #endif  //SHADER_HPP
