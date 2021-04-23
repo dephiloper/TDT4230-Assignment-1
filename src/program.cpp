@@ -1,18 +1,19 @@
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glad/glad.h>
+
 #include <iostream>
-#include "utils/shader.hpp"
+
 #include "utils/renderer.hpp"
+#include "utils/shader.hpp"
 
 Shader gameShader{};
 Renderer renderer{};
 
-void framebufferSizeCallback(GLFWwindow *window, int width, int height)
-{
+void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow* window) {
+void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS)
@@ -34,29 +35,30 @@ void mainLoop(GLFWwindow *window) {
     while (!glfwWindowShouldClose(window)) {
         // process input
         processInput(window);
-        
+
         // rendering
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
+
         renderer.render();
-        
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 }
 
-int main()
-{
+int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
 
     // create window
     GLFWwindow *window = glfwCreateWindow(800, 600, "Marching Cubes", NULL, NULL);
-    
+
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
