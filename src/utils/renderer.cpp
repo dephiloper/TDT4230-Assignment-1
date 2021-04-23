@@ -11,14 +11,16 @@ void Renderer::init() {
     if (gameShader.load("../res/shaders/game.vert", "../res/shaders/game.frag") != 0)
         std::cout << "Error loading shaders" << std::endl;
 
-    computeMesh(glm::vec4((float)glfwGetTime() * 0.2, 0, 0, 1), 50, 4);
-
+    // use this line to generate a the mesh at the beginning (statically)
+    // computeMesh(glm::vec4((float)glfwGetTime() * 0.2, 0, 0, 1), 20, 4);
 }
 
+// flattens the x, y, z coords into single index value
 size_t coordsToIndex(size_t gridSize, size_t x, size_t y, size_t z) {
     return x + (y * gridSize) + (z * gridSize * gridSize);
 }
 
+// converts index value to vec3
 glm::vec3 indexToCoords(size_t gridSize, size_t index) {
     size_t z = index / (gridSize * gridSize);
     size_t y = (index % (gridSize * gridSize)) / gridSize;
@@ -26,28 +28,33 @@ glm::vec3 indexToCoords(size_t gridSize, size_t index) {
     return glm::vec3(x, y, z);
 }
 
+// computes the marching cube mesh by going through the grid and applying the 
 void Renderer::computeMesh(glm::vec4 seed, size_t gridSize, float density) {
     std::vector<float> verts;
     std::vector<float> normals;
 
     glm::vec3 center(gridSize / 2.0f);
 
+    // generate the noise values initially to decrease computation time
     std::vector<float> grid;
     grid.resize((gridSize + 1) * (gridSize + 1) * (gridSize + 1));
     for (size_t x = 0; x < gridSize + 1; x++) {
         for (size_t y = 0; y < gridSize + 1; y++) {
             for (size_t z = 0; z < gridSize + 1; z++) {
+                // use x, y, z of the grid as an input for noise function
                 grid[coordsToIndex(gridSize, x, y, z)] = glm::perlin(glm::vec4(glm::vec3(x, y, z) / (float)gridSize * density, 0.0) + seed);
             }
         }
     }
 
+    // go through the grid apply the triangles
     for (size_t x = 0; x < gridSize; x++) {
         for (size_t y = 0; y < gridSize; y++) {
             for (size_t z = 0; z < gridSize; z++) {
                 int cubeIndex = 0;  // represents the configuration of a cube (e.g. 0, 1, 2 are below the iso level 00000111 -> cubeIndex = 7)
                 float isolevel = -0.2;
 
+                // array of grid values for the current cube
                 std::vector<float> cube = {
                     grid[coordsToIndex(gridSize, x, y, z)],
                     grid[coordsToIndex(gridSize, x + 1, y, z)],
@@ -140,23 +147,24 @@ void Renderer::computeMesh(glm::vec4 seed, size_t gridSize, float density) {
                         float xCoord = edgeVerts[triTable[cubeIndex][i + v]][0];  // 1.
                         xCoord += x;                                              // 2.
                         xCoord /= (float)gridSize;                                // 3.
-                        xCoord -= 0.5f;                                           // 2.
+                        xCoord -= 0.5f;                                           
 
                         float yCoord = edgeVerts[triTable[cubeIndex][i + v]][1];  // 1.
                         yCoord += y;                                              // 2.
                         yCoord /= (float)gridSize;                                // 3.
-                        yCoord -= 0.5f;                                           // 2.
+                        yCoord -= 0.5f;                                           
 
                         float zCoord = edgeVerts[triTable[cubeIndex][i + v]][2];  // 1.
                         zCoord += z;                                              // 2.
                         zCoord /= (float)gridSize;                                // 3.
-                        zCoord -= 0.5f;                                           // 2.
+                        zCoord -= 0.5f;                                           
 
                         verts.push_back(xCoord);
                         verts.push_back(yCoord);
                         verts.push_back(zCoord);
                     }
 
+                    // based on the vertices calculate the normals and add them to a normal list
                     size_t size = verts.size();
                     glm::vec3 a = glm::vec3(verts[size - 9], verts[size - 8], verts[size - 7]);
                     glm::vec3 b = glm::vec3(verts[size - 6], verts[size - 5], verts[size - 4]);
@@ -178,6 +186,8 @@ void Renderer::computeMesh(glm::vec4 seed, size_t gridSize, float density) {
     nTriangles = verts.size();
 }
 
+// http://paulbourke.net/geometry/polygonise/
+// P = P1 + (isovalue - V1) (P2 - P1) / (V2 - V1)
 glm::vec3 Renderer::interpolateVerts(glm::vec3 p1, glm::vec3 p2, float isolevel, float v1, float v2) {
     float mu = (isolevel - v1) / (v2 - v1);
     glm::vec3 p;
@@ -187,19 +197,26 @@ glm::vec3 Renderer::interpolateVerts(glm::vec3 p1, glm::vec3 p2, float isolevel,
 
     return p;
 
+    // uncomment to remove linear interpolation
     //return (p1 + p2) / 2.0f;
 }
 
+// main render function
 void Renderer::render() {
-    // computeMesh(glm::vec4(0, (float)glfwGetTime() * 0.2, 0, (float)glfwGetTime() * 0.02), 12);
-    // computeMesh(glm::vec4((float)glfwGetTime() * 0.2, 0, 0, 1), 20, 4);
+    // uncomment to add dynamic density to which mimics a zoom effect into the noise function
+    // float density = (glm::sin((float)glfwGetTime() * 0.2f) * 0.5f + 0.5f) * 4.0f + 2.0f;
+    // computeMesh(glm::vec4(0, 0, 0, (float)glfwGetTime() * 0.01f), 15, density);
+
+    computeMesh(glm::vec4(0, 0, 0, (float)glfwGetTime() * 0.5f), 15, 4);
 
     gameShader.use();
 
     glm::mat4 model = glm::mat4(1.0f);
-    // model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0, 0.0, 0.0));
+    
+    // uncomment to rotate the mesh
     // model = glm::rotate(model, (float)glfwGetTime() * 0.2f, glm::vec3(0.0, 1.0, 0.0));
-    // model = glm::scale(model, glm::vec3(2.0, 2.0, 2.0));
+    
+    model = glm::scale(model, glm::vec3(1.5, 1.5, 1.5));
 
     gameShader.setMat4("model", model);
 
@@ -335,51 +352,3 @@ unsigned int Renderer::loadMesh(const std::vector<float> &vertices, const std::v
 
     return VAO;
 }
-
-// unsigned int
-// Renderer::loadTexture(unsigned int vao, const std::string &texturePath, bool alphaChannel)
-// {
-//     GLenum format = alphaChannel ? GL_RGBA : GL_RGB;
-
-//     glBindVertexArray(vao);
-
-//     unsigned int texture;
-//     glGenTextures(1, &texture);
-//     glBindTexture(GL_TEXTURE_2D, texture);
-
-//     int width, height, nrChannels;
-//     unsigned char *data = stbi_load(texturePath.c_str(), &width, &height, &nrChannels, 0);
-//     if (data)
-//     {
-//         // glTexImage2D parameters
-//         /* The first argument specifies the texture target; setting this to GL_TEXTURE_2D means this operation will generate a texture on the currently bound texture object at the same target (so any textures bound to targets GL_TEXTURE_1D or GL_TEXTURE_3D will not be affected).
-//          * The second argument specifies the mipmap level for which we want to create a texture for if you want to set each mipmap level manually, but we'll leave it at the base level which is 0.
-//          * The third argument tells OpenGL in what kind of format we want to store the texture. Our image has only RGB values so we'll store the texture with RGB values as well.
-//          * The 4th and 5th argument sets the width and height of the resulting texture. We stored those earlier when loading the image so we'll use the corresponding variables.
-//          * The next argument should always be 0 (some legacy stuff).
-//          * The 7th and 8th argument specify the format and datatype of the source image. We loaded the image with RGB values and stored them as chars (bytes) so we'll pass in the corresponding values.
-//          * The last argument is the actual image data.
-//          */
-//         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-//     }
-//     else
-//     {
-//         std::cout << "Failed to load texture - path: " << texturePath << std::endl;
-//     }
-
-//     // set the texture wrapping/filtering options (on the currently bound texture object)
-//     glGenerateMipmap(GL_TEXTURE_2D);
-//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-//     // free image resources
-//     stbi_image_free(data);
-
-//     // unbind buffer and vertex array so VAO calls don't accidentally modify VAO, but it's not necessary
-//     glBindTexture(GL_TEXTURE_2D, 0);
-//     glBindVertexArray(0);
-
-//     return texture;
-// }
